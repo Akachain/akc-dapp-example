@@ -221,7 +221,6 @@ async function handleTx(txList) {
             inputs: inputs[token],
             //merge output with remainUtxos
             outputs: outputs[token].concat(remainUtxos[token]),
-
         }
         result.pairs.push(pair);
     }
@@ -243,6 +242,7 @@ async function handleTxMint(tx) {
         walletId: txMint.To,
         tokenId: txMint.TokenId,
         amount: txMint.Amount.toString(),
+        metadata: JSON.stringify(tx),
     }
     tx.ActualATMatched = tx.Amount;
     tx.Status = constant.MATCHED;
