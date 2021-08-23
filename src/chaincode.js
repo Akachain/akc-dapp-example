@@ -24,19 +24,19 @@ async function invokeChaincode(input) {
     util.format("\n==== Invoke transaction on organization %s ====\n", orgname)
   );
   try {
-    let targets = null;
-    if (isBatchJob(funcName)) {
-      targets = JSON.parse(process.env.TARGET_NAME_BATCH);
-    } else {
-      targets = JSON.parse(process.env.TARGET_NAME);
-    }
-    console.log("Targets", targets);
+    // let targets = null;
+    // if (isBatchJob(funcName)) {
+    //   targets = JSON.parse(process.env.TARGET_NAME_BATCH);
+    // } else {
+    //   targets = JSON.parse(process.env.TARGET_NAME);
+    // }
+    // console.log("Targets", targets);
     console.log("funcName", funcName);
     console.log("args", args);
 
     const resultInvoke = await akcSdk.invoke(
       channelName,
-      targets,
+      null,
       chaincodeId,
       funcName,
       args,
@@ -151,11 +151,11 @@ async function processRequestChainCode(funcName, args, getTxId) {
     resultCc = await queryChaincode(req);
   }
 
-  if (resultCc.Result.Status !== 200) {
-    throw new Error(resultCc);
-  } else {
+  // if (resultCc.Result.Status !== 200) {
+  //   throw new Error(resultCc);
+  // } else {
     return resultCc;
-  }
+  // }
 }
 
 module.exports = {

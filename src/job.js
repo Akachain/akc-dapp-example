@@ -1,13 +1,17 @@
 "use strict";
 require("dotenv").config();
 
+const loggerCommon = require('../utils/logger.js');
+const logger = loggerCommon.getLogger('db');
 const async = require("async");
 const redis = require("redis");
 const db = require('./db');
 const utxo = require('./utxo');
 const { promisify } = require("util");
+const _ = require('lodash');
 
 const sdk = require("./chaincode");
+const constant = require("../utils/constant");
 /**
  * Redis Config
  */
@@ -21,80 +25,193 @@ const redisClient = redis.createClient({
 //promisify redis client function
 const xrangeAsync = promisify(redisClient.xrange).bind(redisClient);
 
+
+//check if merge is possible 
+function linked(rqSource, rqTarget) {
+  let linked = false;
+  rqSource.Transfer.forEach(itemSource => {
+    rqTarget.Transfer.forEach(itemTarget => {
+      if ((itemSource.From == itemTarget.From) && (itemSource.TokenId == itemTarget.TokenId)) {
+        linked = true;
+      }
+    });
+  });
+  return linked;
+}
+
+
+// split requests into group
+function groupRequest(rqList) {
+  let batch = 0;
+  let i = 0;
+
+  // using BFS to split requests into batches
+  // reference: https://en.wikipedia.org/wiki/Breadth-first_search
+  while (i < rqList.length) {
+    if (!rqList[i].Checked) {
+      rqList[i].Batch = batch;
+      rqList[i].Checked = true;
+      var searchQ = [];
+      searchQ.push(i);
+      while (searchQ.length > 0) {
+        let txIndex = searchQ[0];
+        //dequeue
+        searchQ.splice(0, 1);
+
+        for (const index in rqList) {
+          // check if merge is possible 
+          if (!rqList[index].Checked && linked(rqList[txIndex], rqList[index])) {
+            searchQ.push(index);
+            rqList[txIndex].Batch = batch;
+            rqList[txIndex].Checked = true;
+          }
+        }
+      }
+      batch++;
+    }
+    i++;
+  }
+
+  //Group request by batch handle
+  let groupRq = _.groupBy(rqList, "Batch");
+  return groupRq;
+}
+
+//send to onchain
+async function callMintOnchain(mintRequests) {
+  if (mintRequests.length == 0) {
+    return true;
+  }
+  await Promise.all(mintRequests.map(async (request) => {
+    let handledRequests = await utxo.handleTxMint(request);
+    if (request.Status != constant.REJECTED) {
+      try {
+        const result = await sdk.processRequestChainCode(
+          "Mint",
+          handledRequests,
+          true
+        );
+        if (result.Result.Status !== 200) {
+          request.Status = constant.OC_REJECTED;
+          request.Reason = result.message;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    // console.log("callMintOnchain-handledRequests", request);
+  }));
+  return true;
+}
+
+//send to onchain
+async function callTxOnchain(txRequests) {
+  if (txRequests.length == 0) {
+    return true;
+  }
+  let groupRq = await groupRequest(txRequests);
+  let groupRqArr = Object.values(groupRq);
+  await Promise.all(groupRqArr.map(async (requests) => {
+    let handledRequests = await utxo.handleTx(requests);
+    console.log("handledRequests", handledRequests);
+    try {
+      const result = await sdk.processRequestChainCode(
+        "Exchange",
+        handledRequests,
+        true
+      );
+      if (result.Result.Status !== 200) {
+        for (const rq of requests) {
+          if (rq.Status != constant.REJECTED) {
+            rq.Status = constant.OC_REJECTED;
+            rq.Reason = result.message;
+          }
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }));
+
+  // console.log("callTxOnchain-txRequests", txRequests);
+  return true;
+}
+
 // package request & send to onchain
 async function packageAndCommit(messages) {
-  const requests = [];
   const listRequestId = [];
   const mintRequest = [];
   const txRequest = [];
-  messages.forEach(function (message) {
+  await Promise.all(messages.map(async (message) => {
     // convert the message into a JSON Object
     const id = message[0];
     const values = message[1];
+    //validate
+    if ("Transaction" == values[0]) {
+      // create object
+      try {
 
-    const msgObject = { reqId: id };
-    for (let i = 0; i < values.length; i = i + 2) {
-      //validate
-      if (
-        [
-          "FromWallet",
-          "ToWallet",
-          "FromTokenId",
-          "ToTokenId",
-          "FromTokenAmount",
-          "ToTokenAmount",
-          "TxType",
-          "Status"
-          // "BlockChainId",
-          // "Note",
-          // "CreatedAt",
-          // "UpdatedAt"
-        ].includes(values[i])
-      ) {
-        // create object
-        msgObject[values[i]] = values[i + 1];
-        switch (msgObject.TxType) {
-          case "Mint":
+        let msgObject = JSON.parse(values[1]);
+        msgObject.RequestId = id;
+        msgObject.Batch = null;
+        msgObject.Checked = false;
+        msgObject.Status = null;
+        msgObject.ActualSTMatched = 0;
+        msgObject.ActualATMatched = 0;
+        msgObject.Reason = null;
+
+        switch (msgObject.TransactionType) {
+          case constant.MINT:
             mintRequest.push(msgObject);
+            break;
           default:
             txRequest.push(msgObject);
         }
-        listRequestId.push(id);
-      // } else {
-      //   redisClient.xack(
-      //     process.env.STREAMS_KEY,
-      //     process.env.APPLICATION_ID,
-      //     id
-      //   );
+      } catch (err) {
+        logger.error(err);
       }
-    }
-    await utxo.handleTx(txRequest);
-    requests.push(msgObject);
-  });
 
-  try {
-    const result = await sdk.processRequestChainCode(
-      "BuyAssetToken",
-      { requests: requests },
-      true
-    );
-    if (result.Result.Status == 200) {
-      // XACK those request from PEL
-      await redisClient.xack(
-        process.env.STREAMS_KEY,
-        process.env.APPLICATION_ID,
-        ...listRequestId
-      );
     }
-  } catch (error) {
-    console.error(error);
-  }
+    listRequestId.push(id);
+  }));
+
+  await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest)]);
+
+  console.log("mintRequest", mintRequest);
+  console.log("txRequest", txRequest);
+  
+  let handledRequestList = mintRequest.concat(txRequest);
+  await Promise.all(handledRequestList.map(async (request) => {
+    let redisArgs = [];
+    let valueJson = JSON.stringify(request);
+    redisArgs.push("TransactionAterOnchain");
+    redisArgs.push(valueJson);
+
+    // produce the message
+    await redisClient.xadd(
+      process.env.STREAMS_KEY_PUB,
+      '*',
+      ...redisArgs,
+      (err) => {
+        if (err) {
+          logger.error(err);
+        }
+      },
+    );
+  }));
+  // XACK those request from PEL
+  await redisClient.xack(
+    process.env.STREAMS_KEY_SUB,
+    process.env.APPLICATION_ID,
+    ...listRequestId
+  );
+
 }
 
 // create the group
 redisClient.xgroup(
   "CREATE",
-  process.env.STREAMS_KEY,
+  process.env.STREAMS_KEY_SUB,
   process.env.APPLICATION_ID,
   "$",
   "MKSTREAM",
@@ -114,7 +231,7 @@ async.forever(
   function (next) {
     // check PEL & process
     redisClient.xpending(
-      process.env.STREAMS_KEY,
+      process.env.STREAMS_KEY_SUB,
       process.env.APPLICATION_ID,
       "-",
       "+",
@@ -131,7 +248,7 @@ async.forever(
             try {
               console.log(`${Date.now()} PEL[${n}]`);
               console.log(PEL[n]);
-              xrangeAsync(process.env.STREAMS_KEY, PEL[n][0], PEL[n][0])
+              xrangeAsync(process.env.STREAMS_KEY_SUB, PEL[n][0], PEL[n][0])
                 .then((record) => {
                   console.log(`${Date.now()} record`);
                   console.log(record);
@@ -191,7 +308,7 @@ async.forever(
             "COUNT",
             process.env.REDIS_COUNT,
             "STREAMS",
-            process.env.STREAMS_KEY,
+            process.env.STREAMS_KEY_SUB,
             ">",
             async function (err, stream) {
               if (err) {
@@ -214,3 +331,7 @@ async.forever(
     process.exit();
   }
 );
+
+module.exports = {
+  callTxOnchain
+};

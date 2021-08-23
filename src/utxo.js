@@ -1,5 +1,4 @@
 // var utils = require('./utils')
-const { result } = require('lodash');
 const _ = require('lodash');
 const loggerCommon = require('../utils/logger.js');
 const logger = loggerCommon.getLogger('db');
@@ -29,7 +28,8 @@ function utxoCalculator(utxos, remainUtxos, target) {
         let input = utxos[0];
         var inputValue = _.toNumber(input.Amount);
         amount += inputValue;
-        inputs.push(input);
+        inputs.push(input.Id);
+        // inputs.push(input);
         // go again?
         if (amount >= target) {
             if (amount > target) {
@@ -56,19 +56,6 @@ function utxoCalculator(utxos, remainUtxos, target) {
     return {
         inputs: inputs,
     }
-}
-
-//check if merge is possible 
-function linked(rqSource, rqTarget) {
-    let linked = false;
-    rqSource.Transfer.forEach(itemSource => {
-        rqTarget.Transfer.forEach(itemTarget => {
-            if ((itemSource.From == itemTarget.From) && (itemSource.TokenId == itemTarget.TokenId)) {
-                linked = true;
-            }
-        });
-    });
-    return linked;
 }
 
 // get total utxo amount
@@ -111,11 +98,15 @@ function reCalculationTransfer(outwardTx, returnTx, remainATAmount) {
 
 async function handleTx(txList) {
     logger.info("handleTx");
-    let inputs = [];
-    let outputs = [];
-    // save remain token amount from utxo in.
+    // let inputs = [];
+    // let outputs = [];
     let remainUtxos = [];
+    let inputs = new Map();
+    let outputs = new Map();
+    // let remainUtxos = new Map();
+    // save remain token amount from utxo in.
     for (const txs of txList) {
+        console.log("txs",txs);
         let outwardTx = txs.Transfer[0];
         let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
 
@@ -130,12 +121,18 @@ async function handleTx(txList) {
         }
 
         // Check returnTx condition
-        if (txs.Transaction_Type == constant.EXCHANGE) {
+        if (txs.TransactionType == constant.EXCHANGE) {
             let remainATAmount = await remainingUtxoAmount(returnTx);
-
+            if (remainATAmount <= 0) {
+                // Reject Tx.
+                txs.Status = constant.REJECTED;
+                txs.ActualSTMatched = 0;
+                txs.ActualATMatched = 0;
+                txs.Reason = message.M2.Message;
+                continue;
+            }
             // check if AT amount enough for exchange
             if (remainATAmount < returnTx.Amount) {
-
                 // Re-calculation Transfer.
                 await reCalculationTransfer(outwardTx, returnTx, remainATAmount);
 
@@ -164,14 +161,18 @@ async function handleTx(txList) {
 
         //Handle transaction outward and return
         await Promise.all(txs.Transfer.map(async (tx, index) => {
-
             //create utxo output
             let utxoOut = {
                 WalletId: tx.To,
                 TokenId: tx.TokenId,
                 Amount: tx.ActualMatched.toString(),
             }
-            outputs.push(utxoOut);
+            // outputs.push(utxoOut);
+            if (outputs[tx.TokenId]) {
+                outputs[tx.TokenId].push(utxoOut);
+            } else {
+                outputs[tx.TokenId] = [utxoOut];
+            }
 
             //get utxo info 
             let key = tx.From + '_' + tx.TokenId;
@@ -189,7 +190,11 @@ async function handleTx(txList) {
                 let rsUtxo = await utxoCalculator(utxos.utxoList, remainUtxos, tx.ActualMatched);
 
                 //merge collection, deduplicate result
-                inputs = common.mergeUnique(inputs, rsUtxo.inputs);
+                if (inputs[tx.TokenId]) {
+                    inputs[tx.TokenId] = common.mergeUnique(inputs[tx.TokenId], rsUtxo.inputs);
+                } else {
+                    inputs[tx.TokenId] = rsUtxo.inputs;
+                }
 
                 // calculate total utxo token amount base on utxos list.
                 let totalUtxo = (utxos) ? _.sumBy(utxos.utxoList, function (o) { return _.toNumber(o.Amount); }) : 0;
@@ -205,75 +210,49 @@ async function handleTx(txList) {
         }));
     }
 
-    //merge output with remainUtxos
-    outputs = outputs.concat(_.filter(remainUtxos, function (o) { return o.Amount != 0; }));
+    // split Remain Utxos into group by TokenId
+    remainUtxos = _.groupBy(remainUtxos, "TokenId");
 
-    // transform to onchain's API input.
-    let resultOutputs = _.groupBy(outputs, 'TokenId');
-    let resultInputs = _.mapValues(_.groupBy(inputs, 'TokenId'),
-        inputs => inputs.map(inp => _.values(_.pick(inp, 'Id'))));
+    //transform to Onchain API
     let result = { pairs: [] };
-    for (const token in resultInputs) {
-        resultInputs[token] = _.flatten(resultInputs[token]);
+    for (const token in inputs) {
         let pair = {
             tokenId: token,
-            inputs: resultInputs[token],
-            outputs: resultOutputs[token],
+            inputs: inputs[token],
+            //merge output with remainUtxos
+            outputs: outputs[token].concat(remainUtxos[token]),
 
         }
         result.pairs.push(pair);
     }
     result.metadata = JSON.stringify(txList);
 
-    // console.log("resultInputs", resultInputs);
-    // console.log("resultOutputs", resultOutputs);
+    console.log("inputs", inputs);
+    console.log("outputs", outputs);
+    console.log("result", result);
     return result;
 }
 
-// split requests into group
-function groupRequest(rqList) {
-    let batch = 0;
-    let i = 0;
+// handle Mint Transaction to utxo's output
+async function handleTxMint(tx) {
+    logger.info("handleTxMint");
+    let txMint = tx.Transfer[0];
 
-    // using BFS to split requests into batches
-    // reference: https://en.wikipedia.org/wiki/Breadth-first_search
-    while (i < rqList.length) {
-        if (!rqList[i].Checked) {
-            rqList[i].Batch = batch;
-            rqList[i].Checked = true;
-            var searchQ = [];
-            searchQ.push(i);
-            while (searchQ.length > 0) {
-                let txIndex = searchQ[0];
-                //dequeue
-                searchQ.splice(0, 1);
-
-                for (const index in rqList) {
-                    // check if merge is possible 
-                    if (!rqList[index].Checked && linked(rqList[txIndex], rqList[index])) {
-                        searchQ.push(index);
-                        rqList[txIndex].Batch = batch;
-                        rqList[txIndex].Checked = true;
-                    }
-                }
-            }
-            batch++;
-        }
-        i++;
+    //create utxo output
+    let mintTx = {
+        WalletId: txMint.To,
+        TokenId: txMint.TokenId,
+        Amount: txMint.Amount.toString(),
     }
-
-    //Group request by batch handle
-    let groupRq = _.groupBy(rqList, "Batch");
-
-    const rs = _.forEach(groupRq, async (item) => {
-        let rsHandle = await handleTx(item);
-        console.log("rsHandle", rsHandle);
-        console.log("txList", item);
-    });
-    return groupRq;
+    tx.ActualATMatched = tx.Amount;
+    tx.Status = constant.MATCHED;
+    tx.Checked = true;
+    tx.Reason = 'NA';
+    return mintTx;
 }
+
 module.exports = {
     utxoCalculator,
     handleTx,
-    groupRequest,
+    handleTxMint,
 };
