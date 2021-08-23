@@ -28,15 +28,15 @@ async function invokeChaincode(input) {
     // if (isBatchJob(funcName)) {
     //   targets = JSON.parse(process.env.TARGET_NAME_BATCH);
     // } else {
-    //   targets = JSON.parse(process.env.TARGET_NAME);
+    let targets = JSON.parse(process.env.TARGET_NAME);
     // }
-    // console.log("Targets", targets);
+    console.log("Targets", targets);
     console.log("funcName", funcName);
     console.log("args", args);
 
     const resultInvoke = await akcSdk.invoke(
       channelName,
-      null,
+      targets,
       chaincodeId,
       funcName,
       args,
@@ -154,7 +154,7 @@ async function processRequestChainCode(funcName, args, getTxId) {
   // if (resultCc.Result.Status !== 200) {
   //   throw new Error(resultCc);
   // } else {
-    return resultCc;
+  return resultCc;
   // }
 }
 
