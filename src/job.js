@@ -93,10 +93,11 @@ async function callMintOnchain(mintRequests) {
         );
         if (result.Result.Status !== 200) {
           request.Status = constant.OC_REJECTED;
-          request.Reason = result.message;
+          request.Reason = result.Message;
         }
       } catch (error) {
         console.error(error);
+        throw new Error("Onchain Crash!");
       }
     }
     // console.log("callMintOnchain-handledRequests", request);
@@ -124,7 +125,7 @@ async function callTxOnchain(txRequests) {
         for (const rq of requests) {
           if (rq.Status != constant.REJECTED) {
             rq.Status = constant.OC_REJECTED;
-            rq.Reason = result.message;
+            rq.Reason = result.Message;
           }
         }
       }
@@ -179,7 +180,7 @@ async function packageAndCommit(messages) {
 
   console.log("mintRequest", mintRequest);
   console.log("txRequest", txRequest);
-  
+
   let handledRequestList = mintRequest.concat(txRequest);
   await Promise.all(handledRequestList.map(async (request) => {
     let redisArgs = [];

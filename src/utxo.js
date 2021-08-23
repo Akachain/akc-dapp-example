@@ -240,9 +240,9 @@ async function handleTxMint(tx) {
 
     //create utxo output
     let mintTx = {
-        WalletId: txMint.To,
-        TokenId: txMint.TokenId,
-        Amount: txMint.Amount.toString(),
+        walletId: txMint.To,
+        tokenId: txMint.TokenId,
+        amount: txMint.Amount.toString(),
     }
     tx.ActualATMatched = tx.Amount;
     tx.Status = constant.MATCHED;
