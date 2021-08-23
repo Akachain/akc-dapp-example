@@ -5,7 +5,7 @@ variables:
   DOCKER_DRIVER: overlay2
   RUNNER_ID: ${CI_JOB_ID}
   SONAR_SERVER: 'https://sonar-cathay.akachains.io'
-  CONTAINER_RELEASE_IMAGE: ${CI_REGISTRY_IMAGE}/${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHA}
+  CONTAINER_RELEASE_IMAGE: ${CI_REGISTRY_IMAGE}/${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}
   IMAGE_NAME: ${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHA}
   GIT_SUBMODULE_STRATEGY: recursive
   REPO_MANIFEST_NAME: exchange-core
@@ -15,9 +15,7 @@ variables:
   REPO_MANIFEST_ENV_QA: ./clusters/k8s-qa/develop
   REPO_MANIFEST_ENV_UAT: ./clusters/k8s-uat/develop
   REPO_MANIFEST_ENV_TEST: ./clusters/k8s-test/develop
-  REPO_MANIFEST_TAG_IMAGE: image_iao_service
-
-
+  REPO_MANIFEST_TAG_IMAGE: image_transaction_handle_service
 
 build:
   tags:
