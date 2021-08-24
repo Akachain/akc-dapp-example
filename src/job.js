@@ -185,7 +185,7 @@ async function packageAndCommit(messages) {
   await Promise.all(handledRequestList.map(async (request) => {
     let redisArgs = [];
     let valueJson = JSON.stringify(request);
-    redisArgs.push("TransactionAterOnchain");
+    redisArgs.push("TransactionAfterOnchain");
     redisArgs.push(valueJson);
 
     // produce the message

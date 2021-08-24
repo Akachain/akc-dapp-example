@@ -28,7 +28,7 @@ const getConnection = async function () {
 
 const queryUTXOs = async (walletId, tokenId) => {
     try {
-        let query = format(`SELECT * FROM OC_UTXO WHERE WalletId = '%s' and TokenId = '%s' and Status = 0 ORDER BY CreatedAt;`, walletId, tokenId);
+        let query = format(`SELECT * FROM OC_Utxo WHERE WalletId = '%s' and TokenId = '%s' and Status = 0 ORDER BY CreatedAt;`, walletId, tokenId);
         logger.info('queryUTXO ', query);
         // return connectionPool.query(query).promise();
 
