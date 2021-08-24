@@ -7,6 +7,7 @@ const async = require("async");
 const redis = require("redis");
 const db = require('./db');
 const utxo = require('./utxo');
+const batchCache = require('../utils/common.js');
 const { promisify } = require("util");
 const _ = require('lodash');
 
@@ -115,22 +116,25 @@ async function callTxOnchain(txRequests) {
   await Promise.all(groupRqArr.map(async (requests) => {
     let handledRequests = await utxo.handleTx(requests);
     console.log("handledRequests", handledRequests);
-    try {
-      const result = await sdk.processRequestChainCode(
-        "Exchange",
-        handledRequests,
-        true
-      );
-      if (result.Result.Status !== 200) {
-        for (const rq of requests) {
-          if (rq.Status != constant.REJECTED) {
-            rq.Status = constant.OC_REJECTED;
-            rq.Reason = result.Message;
+    let batchExcute = batchCache.get(txs.Batch);
+    if (batchExcute) {
+      try {
+        const result = await sdk.processRequestChainCode(
+          "Exchange",
+          handledRequests,
+          true
+        );
+        if (result.Result.Status !== 200) {
+          for (const rq of requests) {
+            if (rq.Status != constant.REJECTED) {
+              rq.Status = constant.OC_REJECTED;
+              rq.Reason = result.Message;
+            }
           }
         }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
     }
   }));
 

@@ -4,8 +4,8 @@ const loggerCommon = require('../utils/logger.js');
 const logger = loggerCommon.getLogger('db');
 const common = require('../utils/common.js');
 const message = require('../utils/message.js');
-const NodeCache = require("node-cache");
-const utxosCache = new NodeCache();
+const utxosCache = require('../utils/common.js');
+const batchCache = require('../utils/common.js');
 const constant = require('../utils/constant');
 const db = require('./db');
 
@@ -106,7 +106,7 @@ async function handleTx(txList) {
     // let remainUtxos = new Map();
     // save remain token amount from utxo in.
     for (const txs of txList) {
-        console.log("txs",txs);
+        console.log("txs", txs);
         let outwardTx = txs.Transfer[0];
         let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
 
@@ -205,6 +205,10 @@ async function handleTx(txList) {
                     totalUtxo
                 }
                 utxosCache.set(key, cache);
+                let batchExcute = batchCache.get(txs.Batch);
+                if (!batchExcute || batchExcute == undefined) {
+                    batchCache.set(txs.Batch, true);
+                }
             }
 
         }));
