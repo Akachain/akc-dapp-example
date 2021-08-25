@@ -4,8 +4,9 @@ const loggerCommon = require('../utils/logger.js');
 const logger = loggerCommon.getLogger('db');
 const common = require('../utils/common.js');
 const message = require('../utils/message.js');
-const utxosCache = require('../utils/common.js');
-const batchCache = require('../utils/common.js');
+const NodeCache = require("node-cache");
+const utxosCache = new NodeCache();
+const batchCache = require('../utils/cache.js');
 const constant = require('../utils/constant');
 const db = require('./db');
 
