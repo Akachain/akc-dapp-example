@@ -223,7 +223,7 @@ async function handleTx(txList, utxosCache, batchCache) {
             tokenId: token,
             inputs: inputs[token],
             //merge output with remainUtxos
-            outputs: outputs[token].concat(remainUtxos[token]),
+            outputs: (remainUtxos[token] && outputs[token].length > 0) ? outputs[token].concat(remainUtxos[token]) : outputs[token],
         }
         result.pairs.push(pair);
     }
