@@ -105,7 +105,7 @@ async function handleTx(txList, utxosCache, batchCache) {
     // let remainUtxos = new Map();
     // save remain token amount from utxo in.
     for (const txs of txList) {
-        // console.log("txs", txs);
+        console.log("txs", txs);
         let outwardTx = txs.Transfer[0];
         let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
 
@@ -141,6 +141,7 @@ async function handleTx(txList, utxosCache, batchCache) {
                 txs.ActualATMatched = returnTx.ActualMatched;
                 txs.Reason = message.M0.Message;
             } else {
+                console.log("aaaaaaaaaaaaaaaaaaa");
                 // Tx Matched - update tx's state
                 txs.ActualSTMatched = outwardTx.Amount;
                 txs.ActualATMatched = returnTx.Amount;
@@ -159,7 +160,8 @@ async function handleTx(txList, utxosCache, batchCache) {
         }
 
         //Handle transaction outward and return
-        await Promise.all(txs.Transfer.map(async (tx, index) => {
+        await Promise.all(txs.Transfer.map(async (tx) => {
+            
             //create utxo output
             let utxoOut = {
                 walletId: tx.To,
@@ -187,7 +189,6 @@ async function handleTx(txList, utxosCache, batchCache) {
             if (utxos && utxos.totalUtxo > 0) {
                 //calculate and collect utxos input
                 let rsUtxo = await utxoCalculator(utxos.utxoList, remainUtxos, tx.ActualMatched);
-
                 //merge collection, deduplicate result
                 if (inputs[tx.TokenId]) {
                     inputs[tx.TokenId] = common.mergeUnique(inputs[tx.TokenId], rsUtxo.inputs);
@@ -214,7 +215,7 @@ async function handleTx(txList, utxosCache, batchCache) {
     }
 
     // split Remain Utxos into group by TokenId
-    remainUtxos = _.groupBy(remainUtxos, "TokenId");
+    remainUtxos = _.groupBy(remainUtxos, "tokenId");
 
     //transform to Onchain API
     let result = { pairs: [] };
