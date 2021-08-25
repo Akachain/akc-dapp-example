@@ -33,7 +33,7 @@ function utxoCalculator(utxos, remainUtxos, target) {
         if (amount >= target) {
             if (amount > target) {
                 input.Amount = _.toString(amount - target);
-                remainUtxo.Amount = _.toString(amount - target);
+                remainUtxo.amount = _.toString(amount - target);
             } else {
                 //remove utxo
                 utxos.splice(0, 1);
