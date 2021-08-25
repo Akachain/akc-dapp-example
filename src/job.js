@@ -7,7 +7,7 @@ const async = require("async");
 const redis = require("redis");
 const db = require('./db');
 const utxo = require('./utxo');
-const batchCache = require('../utils/cache.js');
+const batchCache = require('../utils/cache.js')();
 const { promisify } = require("util");
 const _ = require('lodash');
 

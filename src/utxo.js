@@ -6,7 +6,7 @@ const common = require('../utils/common.js');
 const message = require('../utils/message.js');
 const NodeCache = require("node-cache");
 const utxosCache = new NodeCache();
-const batchCache = require('../utils/cache.js');
+const batchCache = require('../utils/cache.js')();
 const constant = require('../utils/constant');
 const db = require('./db');
 
