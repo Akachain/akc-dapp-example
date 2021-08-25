@@ -162,9 +162,9 @@ async function handleTx(txList, utxosCache, batchCache) {
         await Promise.all(txs.Transfer.map(async (tx, index) => {
             //create utxo output
             let utxoOut = {
-                WalletId: tx.To,
-                TokenId: tx.TokenId,
-                Amount: tx.ActualMatched.toString(),
+                walletId: tx.To,
+                tokenId: tx.TokenId,
+                amount: tx.ActualMatched.toString(),
             }
             // outputs.push(utxoOut);
             if (outputs[tx.TokenId]) {
