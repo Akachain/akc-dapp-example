@@ -116,7 +116,7 @@ async function callTxOnchain(txRequests) {
   await Promise.all(groupRqArr.map(async (requests) => {
     let handledRequests = await utxo.handleTx(requests);
     console.log("handledRequests", handledRequests);
-    let batchExcute = batchCache.get(txs.Batch);
+    let batchExcute = batchCache.get(requests[0].Batch);
     if (batchExcute) {
       try {
         const result = await sdk.processRequestChainCode(
