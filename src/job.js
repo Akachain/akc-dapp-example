@@ -7,7 +7,10 @@ const async = require("async");
 const redis = require("redis");
 const db = require('./db');
 const utxo = require('./utxo');
-const batchCache = require('../utils/cache.js')();
+const NodeCache = require("node-cache");
+// const batchCache = require('../utils/globalCache.js');
+const utxosCache = new NodeCache();
+const batchCache = new NodeCache();
 const { promisify } = require("util");
 const _ = require('lodash');
 
@@ -113,11 +116,14 @@ async function callTxOnchain(txRequests) {
   }
   let groupRq = await groupRequest(txRequests);
   let groupRqArr = Object.values(groupRq);
+  //flush all cache
+  await utxosCache.flushAll();;
+  await batchCache.flushAll();
   await Promise.all(groupRqArr.map(async (requests) => {
-    let handledRequests = await utxo.handleTx(requests);
-    console.log("handledRequests", handledRequests);
+    let handledRequests = await utxo.handleTx(requests, utxosCache, batchCache);
     let batchExcute = batchCache.get(requests[0].Batch);
     if (batchExcute) {
+      console.log("batchExcute ",requests[0].Batch);
       try {
         const result = await sdk.processRequestChainCode(
           "Exchange",
@@ -180,7 +186,7 @@ async function packageAndCommit(messages) {
     listRequestId.push(id);
   }));
 
-  await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest)]);
+  await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest, utxosCache)]);
 
   console.log("mintRequest", mintRequest);
   console.log("txRequest", txRequest);

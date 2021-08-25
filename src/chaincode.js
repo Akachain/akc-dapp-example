@@ -18,8 +18,8 @@ async function invokeChaincode(input) {
     orgname,
     artifactFolder,
   } = input;
-  console.log("input:");
-  console.log(JSON.stringify(input));
+  console.log("input to OC:", input);
+  // console.log(JSON.stringify(input));
   console.log(
     util.format("\n==== Invoke transaction on organization %s ====\n", orgname)
   );

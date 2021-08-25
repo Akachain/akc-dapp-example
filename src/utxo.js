@@ -4,9 +4,7 @@ const loggerCommon = require('../utils/logger.js');
 const logger = loggerCommon.getLogger('db');
 const common = require('../utils/common.js');
 const message = require('../utils/message.js');
-const NodeCache = require("node-cache");
-const utxosCache = new NodeCache();
-const batchCache = require('../utils/cache.js')();
+// const batchCache = require('../utils/globalCache.js');
 const constant = require('../utils/constant');
 const db = require('./db');
 
@@ -60,7 +58,7 @@ function utxoCalculator(utxos, remainUtxos, target) {
 }
 
 // get total utxo amount
-async function remainingUtxoAmount(tx) {
+async function remainingUtxoAmount(tx, utxosCache) {
     logger.info(`remainingUtxoAmount - WalletId: ${tx.From}, TokenId: ${tx.TokenId}`);
 
     //get utxo list
@@ -97,7 +95,7 @@ function reCalculationTransfer(outwardTx, returnTx, remainATAmount) {
 // handle Transaction to utxo's input and output
 // transform to onchain's API input.
 
-async function handleTx(txList) {
+async function handleTx(txList, utxosCache, batchCache) {
     logger.info("handleTx");
     // let inputs = [];
     // let outputs = [];
@@ -107,12 +105,12 @@ async function handleTx(txList) {
     // let remainUtxos = new Map();
     // save remain token amount from utxo in.
     for (const txs of txList) {
-        console.log("txs", txs);
+        // console.log("txs", txs);
         let outwardTx = txs.Transfer[0];
         let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
 
         // Check outwardTx condition
-        if (await remainingUtxoAmount(outwardTx) < outwardTx.Amount) {
+        if (await remainingUtxoAmount(outwardTx, utxosCache) < outwardTx.Amount) {
             // Reject Tx.
             txs.Status = constant.REJECTED;
             txs.ActualSTMatched = 0;
@@ -123,7 +121,7 @@ async function handleTx(txList) {
 
         // Check returnTx condition
         if (txs.TransactionType == constant.EXCHANGE) {
-            let remainATAmount = await remainingUtxoAmount(returnTx);
+            let remainATAmount = await remainingUtxoAmount(returnTx, utxosCache);
             if (remainATAmount <= 0) {
                 // Reject Tx.
                 txs.Status = constant.REJECTED;
@@ -231,9 +229,9 @@ async function handleTx(txList) {
     }
     result.metadata = JSON.stringify(txList);
 
-    console.log("inputs", inputs);
-    console.log("outputs", outputs);
-    console.log("result", result);
+    // console.log("inputs", inputs);
+    // console.log("outputs", outputs);
+    // console.log("result", result);
     return result;
 }
 
