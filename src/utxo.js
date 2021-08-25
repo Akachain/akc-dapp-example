@@ -27,7 +27,7 @@ function utxoCalculator(utxos, remainUtxos, target) {
         let input = utxos[0];
         var inputValue = _.toNumber(input.Amount);
         amount += inputValue;
-        inputs.push(input.Id);
+        inputs.push(input._id);
         // inputs.push(input);
         // go again?
         if (amount >= target) {
