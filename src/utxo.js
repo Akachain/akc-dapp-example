@@ -17,9 +17,9 @@ function utxoCalculator(utxos, remainUtxos, target) {
 
     // save utxo's state
     let remainUtxo = {
-        WalletId: utxos[0].WalletId,
-        TokenId: utxos[0].TokenId,
-        Amount: _.toString(remainAmount),
+        walletId: utxos[0].WalletId,
+        tokenId: utxos[0].TokenId,
+        amount: _.toString(remainAmount),
     };
 
     //do while did not reach the target 
