@@ -214,7 +214,7 @@ async function handleTx(txList, utxosCache, batchCache) {
     }
 
     // split Remain Utxos into group by TokenId
-    remainUtxos = _.groupBy(_.filter(remainUtxos, function (o) { return o.amount > 0; }), "tokenId");
+    remainUtxos = _.groupBy(_.filter(remainUtxos, function (o) { return _.toNumber(o.amount) > 0; }), "tokenId");
     console.log("remainUtxos",remainUtxos);
 
     //transform to Onchain API
@@ -224,7 +224,7 @@ async function handleTx(txList, utxosCache, batchCache) {
             tokenId: token,
             inputs: inputs[token],
             //merge output with remainUtxos
-            outputs: (remainUtxos[token] && remainUtxos[token][0] > 0) ? outputs[token].concat(remainUtxos[token]) : outputs[token],
+            outputs: (remainUtxos[token] && _.toNumber(remainUtxos[token][0].amount) > 0) ? outputs[token].concat(remainUtxos[token]) : outputs[token],
         }
         result.pairs.push(pair);
     }

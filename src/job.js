@@ -96,11 +96,15 @@ async function callMintOnchain(mintRequests) {
           true
         );
         if (result.Result.Status !== 200) {
+          if (result.Result.Status == 500) {
+            logger.error(error);
+            throw new Error("Onchain Crash!");
+          }
           request.Status = constant.OC_REJECTED;
           request.Reason = result.Message;
         }
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         throw new Error("Onchain Crash!");
       }
     }
@@ -123,7 +127,7 @@ async function callTxOnchain(txRequests) {
     let handledRequests = await utxo.handleTx(requests, utxosCache, batchCache);
     let batchExcute = batchCache.get(requests[0].Batch);
     if (batchExcute) {
-      console.log("batchExcute ",requests[0].Batch);
+      console.log("batchExcute ", requests[0].Batch);
       try {
         const result = await sdk.processRequestChainCode(
           "Exchange",
@@ -131,6 +135,10 @@ async function callTxOnchain(txRequests) {
           true
         );
         if (result.Result.Status !== 200) {
+          if (result.Result.Status == 500) {
+            logger.error(error);
+            throw new Error("Onchain Crash!");
+          }
           for (const rq of requests) {
             if (rq.Status != constant.REJECTED) {
               rq.Status = constant.OC_REJECTED;
