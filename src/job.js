@@ -178,10 +178,15 @@ async function packageAndCommit(messages) {
         msgObject.Reason = null;
 
         switch (msgObject.TransactionType) {
-          case constant.MINT, constant.ISSUE:
+          case constant.MINT:
+          case constant.ISSUE:
             mintRequest.push(msgObject);
             break;
-          case constant.BURN, constant.DEPOSIT, constant.TRANSFER, constant.EXCHANGE, constant.IAO:
+          case constant.BURN:
+          case constant.DEPOSIT:
+          case constant.TRANSFER:
+          case constant.EXCHANGE:
+          case constant.IAO:
             txRequest.push(msgObject);
             break;
           default:
