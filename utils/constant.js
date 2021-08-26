@@ -5,7 +5,7 @@ module.exports = Object.freeze({
     EXCHANGE: 'Exchange',
     ISSUE: 'Issue',
     DEPOSIT: 'Deposit',
-    INFINITY_WALLET: '0x00000',
+    IAO: 'IAO',
 
     //Tx Status
     RECEIVED: 'RECEIVED',

@@ -120,7 +120,7 @@ async function handleTx(txList, utxosCache, batchCache) {
         }
 
         // Check returnTx condition
-        if (txs.TransactionType == constant.EXCHANGE) {
+        if (txs.TransactionType == constant.EXCHANGE || txs.TransactionType == constant.IAO) {
             let remainATAmount = await remainingUtxoAmount(returnTx, utxosCache);
             if (remainATAmount <= 0) {
                 // Reject Tx.
@@ -141,7 +141,6 @@ async function handleTx(txList, utxosCache, batchCache) {
                 txs.ActualATMatched = returnTx.ActualMatched;
                 txs.Reason = message.M0.Message;
             } else {
-                console.log("aaaaaaaaaaaaaaaaaaa");
                 // Tx Matched - update tx's state
                 txs.ActualSTMatched = outwardTx.Amount;
                 txs.ActualATMatched = returnTx.Amount;
@@ -161,7 +160,7 @@ async function handleTx(txList, utxosCache, batchCache) {
 
         //Handle transaction outward and return
         await Promise.all(txs.Transfer.map(async (tx) => {
-            
+
             //create utxo output
             let utxoOut = {
                 walletId: tx.To,
