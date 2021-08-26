@@ -215,7 +215,7 @@ async function handleTx(txList, utxosCache, batchCache) {
 
     // split Remain Utxos into group by TokenId
     remainUtxos = _.groupBy(_.filter(remainUtxos, function (o) { return _.toNumber(o.amount) > 0; }), "tokenId");
-    console.log("remainUtxos",remainUtxos);
+    console.log("remainUtxos", remainUtxos);
 
     //transform to Onchain API
     let result = { pairs: [] };
@@ -248,7 +248,18 @@ async function handleTxMint(tx) {
         amount: txMint.Amount.toString(),
         metadata: JSON.stringify(tx),
     }
-    tx.ActualATMatched = tx.Amount;
+    switch (tx.TransactionType) {
+        case constant.MINT:
+            tx.ActualSTMatched = txMint.Amount;
+            break;
+        case constant.ISSUE:
+            tx.ActualATMatched = txMint.Amount;
+            break;
+        default:
+            tx.Status = constant.REJECTED;
+            tx.Checked = true;
+            tx.Reason = 'Transfer Type does not exist!';
+    }
     tx.Status = constant.MATCHED;
     tx.Checked = true;
     tx.Reason = 'NA';

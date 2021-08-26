@@ -97,7 +97,6 @@ async function callMintOnchain(mintRequests) {
         );
         if (result.Result.Status !== 200) {
           if (result.Result.Status == 500) {
-            logger.error(error);
             throw new Error("Onchain Crash!");
           }
           request.Status = constant.OC_REJECTED;
@@ -136,7 +135,6 @@ async function callTxOnchain(txRequests) {
         );
         if (result.Result.Status !== 200) {
           if (result.Result.Status == 500) {
-            logger.error(error);
             throw new Error("Onchain Crash!");
           }
           for (const rq of requests) {
@@ -180,11 +178,15 @@ async function packageAndCommit(messages) {
         msgObject.Reason = null;
 
         switch (msgObject.TransactionType) {
-          case constant.MINT:
+          case constant.MINT, constant.ISSUE:
             mintRequest.push(msgObject);
             break;
-          default:
+          case constant.BURN, constant.DEPOSIT, constant.TRANSFER, constant.EXCHANGE, constant.IAO:
             txRequest.push(msgObject);
+            break;
+          default:
+            logger.error("TransactionType does note exist: ", msgObject);
+            break;
         }
       } catch (err) {
         logger.error(err);
