@@ -258,7 +258,7 @@ async function handleTxMint(tx) {
         default:
             tx.Status = constant.REJECTED;
             tx.Checked = true;
-            tx.Reason = 'Transfer Type does not exist!';
+            tx.Reason = 'Transaction Type does not exist!';
     }
     tx.Status = constant.MATCHED;
     tx.Checked = true;
