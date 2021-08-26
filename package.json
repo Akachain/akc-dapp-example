@@ -1,5 +1,5 @@
 {
-  "name": "iao-service",
+  "name": "transaction-handle-service",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@akachain/akc-node-sdk-2.0": "^1.0.2",
+    "@akachain/akc-node-sdk-2.0": "^1.0.3",
     "async": "^3.2.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
