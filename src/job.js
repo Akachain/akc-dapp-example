@@ -105,7 +105,7 @@ async function callMintOnchain(mintRequests) {
       } catch (error) {
         request.Status = constant.OC_REJECTED;
         request.Reason = "Onchain Crash!";
-        throw error;
+        // throw error;
       }
     }
     // console.log("callMintOnchain-handledRequests", request);
@@ -152,7 +152,7 @@ async function callTxOnchain(txRequests) {
             rq.Reason = "Onchain Crash!";
           }
         }
-        throw error;
+        // throw error;
       }
     }
   }));
