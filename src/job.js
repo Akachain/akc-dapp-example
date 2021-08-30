@@ -190,6 +190,7 @@ async function packageAndCommit(messages) {
             mintRequest.push(msgObject);
             break;
           case constant.BURN:
+          case constant.TOPUP:
           case constant.DEPOSIT:
           case constant.TRANSFER:
           case constant.EXCHANGE:

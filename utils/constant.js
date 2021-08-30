@@ -6,6 +6,7 @@ module.exports = Object.freeze({
     ISSUE: 'Issue',
     DEPOSIT: 'Deposit',
     IAO: 'IAO',
+    TOPUP: 'Topup',
 
     //Tx Status
     RECEIVED: 'RECEIVED',
