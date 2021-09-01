@@ -14,6 +14,7 @@ const batchCache = new NodeCache();
 const { promisify } = require("util");
 const _ = require('lodash');
 const message = require('../utils/message.js');
+const common = require('../utils/common.js');
 
 const sdk = require("./chaincode");
 const constant = require("../utils/constant");
@@ -139,10 +140,10 @@ async function callTxOnchain(txRequests) {
           true
         );
         let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
-        let message = (result && result.Message) ? result.Message : message.M999.Message;
+        let returnMessage = (result && result.Message) ? result.Message : message.M999.Message;
 
         if (status !== constant.SUCCESS) {
-          let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : message;
+          let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : returnMessage;
 
           for (const rq of requests) {
             if (rq.Status != constant.REJECTED) {
