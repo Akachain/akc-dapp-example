@@ -13,6 +13,7 @@ const utxosCache = new NodeCache();
 const batchCache = new NodeCache();
 const { promisify } = require("util");
 const _ = require('lodash');
+const message = require('../utils/message.js');
 
 const sdk = require("./chaincode");
 const constant = require("../utils/constant");
@@ -91,21 +92,24 @@ async function callMintOnchain(mintRequests) {
     if (request.Status != constant.REJECTED) {
       try {
         const result = await sdk.processRequestChainCode(
-          "Mint",
+          constant.MINT,
           handledRequests,
           true
         );
-        if (result.Result.Status !== 200) {
-          if (result.Result.Status == 500) {
-            throw new Error("Onchain Crash!");
+        let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
+        let message = (result && result.Message) ? result.Message : message.M999.Message;
+
+        if (status !== constant.SUCCESS) {
+          let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : message;
+
+          common.setTxState(request, constant.OC_REJECTED, 0, 0, reason);
+
+          if (status == constant.NETWORK_PROBLEM) {
+            throw new Error(message.M999.Message);
           }
-          request.Status = constant.OC_REJECTED;
-          request.Reason = result.Message;
         }
       } catch (error) {
-        request.Status = constant.OC_REJECTED;
-        request.Reason = "Onchain Crash!";
-        // throw error;
+        throw error;
       }
     }
     // console.log("callMintOnchain-handledRequests", request);
@@ -130,29 +134,28 @@ async function callTxOnchain(txRequests) {
       console.log("batchExcute ", requests[0].Batch);
       try {
         const result = await sdk.processRequestChainCode(
-          "Exchange",
+          constant.EXCHANGE,
           handledRequests,
           true
         );
-        if (result.Result.Status !== 200) {
-          if (result.Result.Status == 500) {
-            throw new Error("Onchain Crash!");
-          }
+        let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
+        let message = (result && result.Message) ? result.Message : message.M999.Message;
+
+        if (status !== constant.SUCCESS) {
+          let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : message;
+
           for (const rq of requests) {
             if (rq.Status != constant.REJECTED) {
-              rq.Status = constant.OC_REJECTED;
-              rq.Reason = result.Message;
+              common.setTxState(rq, constant.OC_REJECTED, 0, 0, reason);
             }
+          }
+
+          if (status == constant.NETWORK_PROBLEM) {
+            throw new Error(message.M999.Message);
           }
         }
       } catch (error) {
-        for (const rq of requests) {
-          if (rq.Status != constant.REJECTED) {
-            rq.Status = constant.OC_REJECTED;
-            rq.Reason = "Onchain Crash!";
-          }
-        }
-        // throw error;
+        throw error;
       }
     }
   }));

@@ -107,55 +107,39 @@ async function handleTx(txList, utxosCache, batchCache) {
     for (const txs of txList) {
         console.log("txs", txs);
         let outwardTx = txs.Transfer[0];
-        let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
 
         // Check outwardTx condition
         if (await remainingUtxoAmount(outwardTx, utxosCache) < outwardTx.Amount) {
             // Reject Tx.
-            txs.Status = constant.REJECTED;
-            txs.ActualSTMatched = 0;
-            txs.ActualATMatched = 0;
-            txs.Reason = message.M1.Message;
+            common.setTxState(txs, constant.REJECTED, 0, 0, message.M1.Message);
             continue;
         }
 
-        // Check returnTx condition
         if (txs.TransactionType == constant.EXCHANGE || txs.TransactionType == constant.IAO) {
+            // Check returnTx condition
+            let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
             let remainATAmount = await remainingUtxoAmount(returnTx, utxosCache);
             if (remainATAmount <= 0) {
                 // Reject Tx.
-                txs.Status = constant.REJECTED;
-                txs.ActualSTMatched = 0;
-                txs.ActualATMatched = 0;
-                txs.Reason = message.M2.Message;
+                common.setTxState(txs, constant.REJECTED, 0, 0, message.M2.Message);
                 continue;
             }
             // check if AT amount enough for exchange
             if (remainATAmount < returnTx.Amount) {
                 // Re-calculation Transfer.
                 await reCalculationTransfer(outwardTx, returnTx, remainATAmount);
-
                 // Tx Partial-Matched - update tx's state
-                txs.Status = constant.PARTIALLY_MATCHED;
-                txs.ActualSTMatched = outwardTx.ActualMatched;
-                txs.ActualATMatched = returnTx.ActualMatched;
-                txs.Reason = message.M0.Message;
+                common.setTxState(txs, constant.PARTIALLY_MATCHED, outwardTx.ActualMatched, returnTx.ActualMatched, message.M0.Message);
             } else {
                 // Tx Matched - update tx's state
-                txs.ActualSTMatched = outwardTx.Amount;
-                txs.ActualATMatched = returnTx.Amount;
+                common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, returnTx.ActualMatched, message.M0.Message);
                 outwardTx.ActualMatched = outwardTx.Amount;
                 returnTx.ActualMatched = returnTx.Amount;
-                txs.Status = constant.MATCHED;
-                txs.Reason = message.M0.Message;
             }
         } else {
             // Tx Matched - update tx's state
-            txs.ActualSTMatched = outwardTx.Amount;
-            txs.ActualATMatched = 0;
+            common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, 0, message.M0.Message);
             outwardTx.ActualMatched = outwardTx.Amount;
-            txs.Status = constant.MATCHED;
-            txs.Reason = message.M0.Message;
         }
 
         //Handle transaction outward and return
@@ -181,8 +165,7 @@ async function handleTx(txList, utxosCache, batchCache) {
                 logger.error("cant not find utxos");
 
                 //Reject tx
-                txs.Status = constant.REJECTED;
-                txs.Reason = message.M1.Message;
+                common.setTxState(txs, constant.REJECTED, 0, 0, message.M1.Message);
                 return;
             }
             if (utxos && utxos.totalUtxo > 0) {
@@ -250,19 +233,15 @@ async function handleTxMint(tx) {
     }
     switch (tx.TransactionType) {
         case constant.MINT:
-            tx.ActualSTMatched = txMint.Amount;
+            common.setTxState(tx, constant.MATCHED, txMint.Amount, 0, message.M0.Message);
             break;
         case constant.ISSUE:
-            tx.ActualATMatched = txMint.Amount;
+            common.setTxState(tx, constant.MATCHED, 0, txMint.Amount, message.M0.Message);
             break;
         default:
-            tx.Status = constant.REJECTED;
-            tx.Checked = true;
-            tx.Reason = 'Transaction Type does not exist!';
+            common.setTxState(tx, constant.REJECTED, 0, 0, message.M3.Message);
     }
-    tx.Status = constant.MATCHED;
     tx.Checked = true;
-    tx.Reason = 'NA';
     return mintTx;
 }
 

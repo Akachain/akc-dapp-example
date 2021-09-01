@@ -14,4 +14,9 @@ module.exports = Object.freeze({
     PARTIALLY_MATCHED: 'PARTIALLY_MATCHED',
     REJECTED: 'REJECTED',
     OC_REJECTED: 'OC_REJECTED',
+
+    //Onchain Status
+    SUCCESS: 200,
+    NETWORK_PROBLEM: 500,
+
 });

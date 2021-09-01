@@ -10,6 +10,14 @@ module.exports = Object.freeze({
     M2: {
         'Code': 'M2',
         'Message': 'AT Amount are out of stock'
-    }
+    },
+    M3: {
+        'Code': 'M3',
+        'Message': 'Transaction Type does not exist!'
+    },
+    M999: {
+        'Code': 'M999',
+        'Message': 'Onchain Crash!'
+    },
 }
 );
