@@ -98,10 +98,10 @@ async function callMintOnchain(mintRequests) {
           true
         );
         let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
-        let message = (result && result.Message) ? result.Message : message.M999.Message;
+        let returnMessage = (result && result.Message) ? result.Message : message.M999.Message;
 
         if (status !== constant.SUCCESS) {
-          let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : message;
+          let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : returnMessage;
 
           common.setTxState(request, constant.OC_REJECTED, 0, 0, reason);
 
