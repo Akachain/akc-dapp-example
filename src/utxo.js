@@ -132,14 +132,14 @@ async function handleTx(txList, utxosCache, batchCache) {
                 common.setTxState(txs, constant.PARTIALLY_MATCHED, outwardTx.ActualMatched, returnTx.ActualMatched, message.M0.Message);
             } else {
                 // Tx Matched - update tx's state
-                common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, returnTx.ActualMatched, message.M0.Message);
                 outwardTx.ActualMatched = outwardTx.Amount;
                 returnTx.ActualMatched = returnTx.Amount;
+                common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, returnTx.ActualMatched, message.M0.Message);
             }
         } else {
             // Tx Matched - update tx's state
-            common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, 0, message.M0.Message);
             outwardTx.ActualMatched = outwardTx.Amount;
+            common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, 0, message.M0.Message);
         }
 
         //Handle transaction outward and return
