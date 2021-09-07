@@ -106,16 +106,17 @@ async function handleTx(txList, utxosCache, batchCache) {
     // save remain token amount from utxo in.
     for (const txs of txList) {
         console.log("txs", txs);
-        let outwardTx = txs.Transfer[0];
-
-        // Check outwardTx condition
-        if (await remainingUtxoAmount(outwardTx, utxosCache) < outwardTx.Amount) {
-            // Reject Tx.
-            common.setTxState(txs, constant.REJECTED, 0, 0, message.M1.Message);
-            continue;
-        }
 
         if (txs.TransactionType == constant.EXCHANGE || txs.TransactionType == constant.IAO) {
+            let outwardTx = txs.Transfer[0];
+
+            // Check outwardTx condition
+            if (await remainingUtxoAmount(outwardTx, utxosCache) < outwardTx.Amount) {
+                // Reject Tx.
+                common.setTxState(txs, constant.REJECTED, 0, 0, message.M1.Message);
+                continue;
+            }
+
             // Check returnTx condition
             let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
             let remainATAmount = await remainingUtxoAmount(returnTx, utxosCache);
@@ -137,19 +138,35 @@ async function handleTx(txList, utxosCache, batchCache) {
                 common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, returnTx.ActualMatched, message.M0.Message);
             }
         } else {
+            let transferList = txs.Transfer;
+            let isTokenEnough = true;
+            for (const tfr of transferList) {
+                // Check outwardTx condition
+                if (await remainingUtxoAmount(tfr, utxosCache) < tfr.Amount) {
+                    // Reject Tx.
+                    isTokenEnough = false;
+                    break;
+                }
+            }
             // Tx Matched - update tx's state
-            outwardTx.ActualMatched = outwardTx.Amount;
-            common.setTxState(txs, constant.MATCHED, outwardTx.ActualMatched, 0, message.M0.Message);
+            if (isTokenEnough) {
+                common.setTxState(txs, constant.MATCHED, 0, 0, message.M0.Message);
+            } else {
+                common.setTxState(txs, constant.REJECTED, 0, 0, message.M1.Message);
+                continue;
+            }
         }
+
 
         //Handle transaction outward and return
         await Promise.all(txs.Transfer.map(async (tx) => {
 
+            let actualMatchedStr = tx.ActualMatched ? tx.ActualMatched.toString() : tx.Amount.toString();
             //create utxo output
             let utxoOut = {
                 walletId: tx.To,
                 tokenId: tx.TokenId,
-                amount: tx.ActualMatched.toString(),
+                amount: actualMatchedStr,
             }
             // outputs.push(utxoOut);
             if (outputs[tx.TokenId]) {
