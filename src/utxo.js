@@ -157,16 +157,15 @@ async function handleTx(txList, utxosCache, batchCache) {
             }
         }
 
-
         //Handle transaction outward and return
         await Promise.all(txs.Transfer.map(async (tx) => {
 
-            let actualMatchedStr = tx.ActualMatched ? tx.ActualMatched.toString() : tx.Amount.toString();
+            let actualMatched = tx.ActualMatched ? tx.ActualMatched : tx.Amount;
             //create utxo output
             let utxoOut = {
                 walletId: tx.To,
                 tokenId: tx.TokenId,
-                amount: actualMatchedStr,
+                amount: actualMatched.toString(),
             }
             // outputs.push(utxoOut);
             if (outputs[tx.TokenId]) {
@@ -187,7 +186,7 @@ async function handleTx(txList, utxosCache, batchCache) {
             }
             if (utxos && utxos.totalUtxo > 0) {
                 //calculate and collect utxos input
-                let rsUtxo = await utxoCalculator(utxos.utxoList, remainUtxos, tx.ActualMatched);
+                let rsUtxo = await utxoCalculator(utxos.utxoList, remainUtxos, actualMatched);
                 //merge collection, deduplicate result
                 if (inputs[tx.TokenId]) {
                     inputs[tx.TokenId] = common.mergeUnique(inputs[tx.TokenId], rsUtxo.inputs);
@@ -230,9 +229,9 @@ async function handleTx(txList, utxosCache, batchCache) {
     }
     result.metadata = JSON.stringify(txList);
 
-    // console.log("inputs", inputs);
-    // console.log("outputs", outputs);
-    // console.log("result", result);
+    console.log("inputs", inputs);
+    console.log("outputs", outputs);
+    console.log("result", result);
     return result;
 }
 
