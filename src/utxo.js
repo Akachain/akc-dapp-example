@@ -45,13 +45,12 @@ function utxoCalculator(utxos, remainUtxos, target) {
         utxos.splice(0, 1);
     }
 
-    let remainIndex = _.findIndex(remainUtxos, { 'WalletId': remainUtxo.WalletId, 'TokenId': remainUtxo.TokenId });
+    let remainIndex = _.findIndex(remainUtxos, { 'walletId': remainUtxo.walletId, 'tokenId': remainUtxo.tokenId });
     if (remainIndex < 0) {
         remainUtxos.push(remainUtxo);
     } else {
         remainUtxos[remainIndex] = remainUtxo;
     }
-
     return {
         inputs: inputs,
     }
@@ -187,6 +186,7 @@ async function handleTx(txList, utxosCache, batchCache) {
             if (utxos && utxos.totalUtxo > 0) {
                 //calculate and collect utxos input
                 let rsUtxo = await utxoCalculator(utxos.utxoList, remainUtxos, actualMatched);
+                
                 //merge collection, deduplicate result
                 if (inputs[tx.TokenId]) {
                     inputs[tx.TokenId] = common.mergeUnique(inputs[tx.TokenId], rsUtxo.inputs);
