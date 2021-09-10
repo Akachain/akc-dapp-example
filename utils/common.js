@@ -23,10 +23,10 @@ const setTxState = function (tx, status, actualSTMatched, actualATMatched, reaso
 }
 
 const rest = async timeRest => {
-    logger.debug("rest", timeRest / 1000, "s");
+    logger.info("rest", timeRest / 1000, "s");
     return new Promise((resolve) => {
       setTimeout(() => {
-        logger.debug("rest done!");
+        logger.info("rest done!");
         resolve("rest");
       }, timeRest);
     });
