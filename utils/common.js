@@ -22,9 +22,20 @@ const setTxState = function (tx, status, actualSTMatched, actualATMatched, reaso
     return true;
 }
 
+const rest = async timeRest => {
+    logger.debug("rest", timeRest / 1000, "s");
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        logger.debug("rest done!");
+        resolve("rest");
+      }, timeRest);
+    });
+  };
+
 module.exports = {
     mergeUnique,
     setTxState,
+    rest,
     // utxosCache,
     // batchCache,
 };

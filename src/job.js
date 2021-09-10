@@ -244,7 +244,7 @@ async function packageAndCommit(messages) {
     process.env.APPLICATION_ID,
     ...listRequestId
   );
-
+  await common.rest(process.env.NORMRESTTIME);
 }
 
 // create the group
@@ -336,7 +336,6 @@ async.forever(
           //       next(errRec);
           //     });
           // });
-
           next();
         } else {
           // if PEL.length = 0 => read next messages
