@@ -199,6 +199,7 @@ async function packageAndCommit(messages) {
           case constant.TRANSFER:
           case constant.EXCHANGE:
           case constant.IAO:
+          case constant.SECONDARYTX:
             txRequest.push(msgObject);
             break;
           default:

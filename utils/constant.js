@@ -2,6 +2,7 @@ module.exports = Object.freeze({
     MINT: 'Mint',
     BURN: 'Burn',
     TRANSFER: 'Transfer',
+    SECONDARYTX: 'SecondaryTx',
     EXCHANGE: 'Exchange',
     ISSUE: 'Issue',
     DEPOSIT: 'Deposit',
