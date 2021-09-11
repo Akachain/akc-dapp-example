@@ -95,7 +95,7 @@ async function callMintOnchain(mintRequests) {
       try {
         const result = await sdk.processRequestChainCode(
           constant.MINT,
-          handledRequests.ocInput,
+          handledRequests,
           true
         );
         let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
@@ -383,5 +383,6 @@ async.forever(
 );
 
 module.exports = {
-  callTxOnchain
+  callTxOnchain,
+  callMintOnchain
 };
