@@ -158,8 +158,9 @@ async function handleTx(txList) {
         }
 
         //Handle transaction outward and return
-        await Promise.all(txs.Transfer.map(async (tx) => {
-
+        // await Promise.all(txs.Transfer.map(async (tx) => {
+        
+        for (const tx of txs.Transfer) {
             let actualMatched = tx.ActualMatched ? tx.ActualMatched : tx.Amount;
             //create utxo output
             let utxoOut = {
@@ -210,7 +211,7 @@ async function handleTx(txList) {
                 }
             }
 
-        }));
+        };
     }
 
     // split Remain Utxos into group by TokenId
