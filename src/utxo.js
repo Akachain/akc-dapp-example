@@ -1,10 +1,8 @@
-// var utils = require('./utils')
 const _ = require('lodash');
 const loggerCommon = require('../utils/logger.js');
 const logger = loggerCommon.getLogger('db');
 const common = require('../utils/common.js');
 const message = require('../utils/message.js');
-// const batchCache = require('../utils/globalCache.js');
 const constant = require('../utils/constant');
 const db = require('./db');
 
@@ -57,17 +55,20 @@ function utxoCalculator(utxos, remainUtxos, target) {
 }
 
 // get total utxo amount
-async function remainingUtxoAmount(tx, utxosCache) {
+async function remainingUtxoAmount(tx) {
     logger.info(`remainingUtxoAmount - WalletId: ${tx.From}, TokenId: ${tx.TokenId}`);
 
     //get utxo list
     let key = tx.From + '_' + tx.TokenId;
 
     //check if utxo is existed in cache
-    let utxos = utxosCache.get(key);
+    let utxos = global.utxosCache.get(key);
     if (utxos == undefined) {
         //get utxo list from database
         let utxoList = await db.queryUTXOs(tx.From, tx.TokenId);
+        await _.remove(utxoList, function (utxo) {
+            return global.usedUtxosIdCache.get(utxo._id) == true;
+        });
         let totalUtxo = (utxoList) ? _.sumBy(utxoList, function (o) { return _.toNumber(o.Amount); }) : 0;
 
         //caching utxos information
@@ -75,7 +76,7 @@ async function remainingUtxoAmount(tx, utxosCache) {
             utxoList,
             totalUtxo
         }
-        utxosCache.set(key, cache);
+        global.utxosCache.set(key, cache);
         return totalUtxo;
     } else {
         return utxos.totalUtxo;
@@ -94,7 +95,7 @@ function reCalculationTransfer(outwardTx, returnTx, remainATAmount) {
 // handle Transaction to utxo's input and output
 // transform to onchain's API input.
 
-async function handleTx(txList, utxosCache, batchCache) {
+async function handleTx(txList) {
     logger.info("handleTx");
     // let inputs = [];
     // let outputs = [];
@@ -110,7 +111,7 @@ async function handleTx(txList, utxosCache, batchCache) {
             let outwardTx = txs.Transfer[0];
 
             // Check outwardTx condition
-            if (await remainingUtxoAmount(outwardTx, utxosCache) < outwardTx.Amount) {
+            if (await remainingUtxoAmount(outwardTx) < outwardTx.Amount) {
                 // Reject Tx.
                 common.setTxState(txs, constant.REJECTED, 0, 0, message.M1.Message);
                 continue;
@@ -118,7 +119,7 @@ async function handleTx(txList, utxosCache, batchCache) {
 
             // Check returnTx condition
             let returnTx = (txs.Transfer[1]) ? txs.Transfer[1] : null;
-            let remainATAmount = await remainingUtxoAmount(returnTx, utxosCache);
+            let remainATAmount = await remainingUtxoAmount(returnTx);
             if (remainATAmount <= 0) {
                 // Reject Tx.
                 common.setTxState(txs, constant.REJECTED, 0, 0, message.M2.Message);
@@ -141,7 +142,7 @@ async function handleTx(txList, utxosCache, batchCache) {
             let isTokenEnough = true;
             for (const tfr of transferList) {
                 // Check outwardTx condition
-                if (await remainingUtxoAmount(tfr, utxosCache) < tfr.Amount) {
+                if (await remainingUtxoAmount(tfr) < tfr.Amount) {
                     // Reject Tx.
                     isTokenEnough = false;
                     break;
@@ -175,7 +176,7 @@ async function handleTx(txList, utxosCache, batchCache) {
 
             //get utxo info 
             let key = tx.From + '_' + tx.TokenId;
-            let utxos = utxosCache.get(key);
+            let utxos = global.utxosCache.get(key);
             if (utxos == undefined) {
                 logger.error("cant not find utxos");
 
@@ -186,7 +187,7 @@ async function handleTx(txList, utxosCache, batchCache) {
             if (utxos && utxos.totalUtxo > 0) {
                 //calculate and collect utxos input
                 let rsUtxo = await utxoCalculator(utxos.utxoList, remainUtxos, actualMatched);
-                
+
                 //merge collection, deduplicate result
                 if (inputs[tx.TokenId]) {
                     inputs[tx.TokenId] = common.mergeUnique(inputs[tx.TokenId], rsUtxo.inputs);
@@ -202,10 +203,10 @@ async function handleTx(txList, utxosCache, batchCache) {
                     utxoList: utxos.utxoList,
                     totalUtxo
                 }
-                utxosCache.set(key, cache);
-                let batchExcute = batchCache.get(txs.Batch);
+                global.utxosCache.set(key, cache);
+                let batchExcute = global.batchCache.get(txs.Batch);
                 if (!batchExcute || batchExcute == undefined) {
-                    batchCache.set(txs.Batch, true);
+                    global.batchCache.set(txs.Batch, true);
                 }
             }
 
@@ -217,7 +218,8 @@ async function handleTx(txList, utxosCache, batchCache) {
     console.log("remainUtxos", remainUtxos);
 
     //transform to Onchain API
-    let result = { pairs: [] };
+    let ocInput = { pairs: [] };
+    let inputList = [];
     for (const token in inputs) {
         let pair = {
             tokenId: token,
@@ -225,14 +227,16 @@ async function handleTx(txList, utxosCache, batchCache) {
             //merge output with remainUtxos
             outputs: (remainUtxos[token] && _.toNumber(remainUtxos[token][0].amount) > 0) ? outputs[token].concat(remainUtxos[token]) : outputs[token],
         }
-        result.pairs.push(pair);
+        ocInput.pairs.push(pair);
+        inputList = inputList.concat(inputs[token]);
     }
-    result.metadata = JSON.stringify(txList);
+    ocInput.metadata = JSON.stringify(txList);
 
-    console.log("inputs", inputs);
-    console.log("outputs", outputs);
-    console.log("result", result);
-    return result;
+    // console.log("inputs", inputs);
+    // console.log("outputs", outputs);
+    // console.log("ocInput", ocInput);
+    // console.log("inputList", inputList);
+    return { ocInput, inputList };
 }
 
 // handle Mint Transaction to utxo's output

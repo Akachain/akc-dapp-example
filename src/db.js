@@ -35,11 +35,8 @@ const queryUTXOs = async (walletId, tokenId) => {
         return new Promise((resolve, reject) => {
             connectionPool.query(query, function (error, results, fields) {
                 if (error) return reject(error);
-                // console.log('>> results: ', results);
                 var string = JSON.stringify(results);
-                // console.log('>> string: ', string);
                 var json = JSON.parse(string);
-                // console.log('>> string: ', json);
                 return resolve(json);
             });
         })

@@ -8,9 +8,10 @@ const redis = require("redis");
 const db = require('./db');
 const utxo = require('./utxo');
 const NodeCache = require("node-cache");
-// const batchCache = require('../utils/globalCache.js');
-const utxosCache = new NodeCache();
-const batchCache = new NodeCache();
+
+global.utxosCache = new NodeCache();
+global.usedUtxosIdCache = new NodeCache({ stdTTL: 120 });
+global.batchCache = new NodeCache();
 const { promisify } = require("util");
 const _ = require('lodash');
 const message = require('../utils/message.js');
@@ -94,7 +95,7 @@ async function callMintOnchain(mintRequests) {
       try {
         const result = await sdk.processRequestChainCode(
           constant.MINT,
-          handledRequests,
+          handledRequests.ocInput,
           true
         );
         let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
@@ -126,17 +127,18 @@ async function callTxOnchain(txRequests) {
   let groupRq = await groupRequest(txRequests);
   let groupRqArr = Object.values(groupRq);
   //flush all cache
-  await utxosCache.flushAll();;
-  await batchCache.flushAll();
+  await global.utxosCache.flushAll();
+  await global.batchCache.flushAll();
   await Promise.all(groupRqArr.map(async (requests) => {
-    let handledRequests = await utxo.handleTx(requests, utxosCache, batchCache);
-    let batchExcute = batchCache.get(requests[0].Batch);
+    let handledRequests = await utxo.handleTx(requests);
+    let batchExcute = global.batchCache.get(requests[0].Batch);
     if (batchExcute) {
       console.log("batchExcute ", requests[0].Batch);
+      // console.log("handledRequests ", handledRequests);
       try {
         const result = await sdk.processRequestChainCode(
           constant.EXCHANGE,
-          handledRequests,
+          handledRequests.ocInput,
           true
         );
         let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
@@ -154,6 +156,10 @@ async function callTxOnchain(txRequests) {
           if (status == constant.NETWORK_PROBLEM) {
             throw new Error(message.M999.Message);
           }
+        } else {
+          handledRequests.inputList.map(input => {
+            global.usedUtxosIdCache.set(input, true);
+          });
         }
       } catch (error) {
         throw error;
@@ -214,7 +220,7 @@ async function packageAndCommit(messages) {
     listRequestId.push(id);
   }));
 
-  await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest, utxosCache)]);
+  await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest)]);
 
   console.log("mintRequest", mintRequest);
   console.log("txRequest", txRequest);
@@ -238,6 +244,12 @@ async function packageAndCommit(messages) {
       },
     );
   }));
+
+  //
+  //TODO------------------
+  // Handle handledRequestList when Transaction-handle-service crash before xack request -> handle double request from redis. 
+  //---------------------
+
   // XACK those request from PEL
   await redisClient.xack(
     process.env.STREAMS_KEY_SUB,
