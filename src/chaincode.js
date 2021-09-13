@@ -18,7 +18,7 @@ async function invokeChaincode(input) {
     orgname,
     artifactFolder,
   } = input;
-  console.log("input to OC:", input);
+  // console.log("input to OC:", input);
   // console.log(JSON.stringify(input));
   console.log(
     util.format("\n==== Invoke transaction on organization %s ====\n", orgname)
@@ -32,7 +32,7 @@ async function invokeChaincode(input) {
     // }
     console.log("Targets", targets);
     console.log("funcName", funcName);
-    console.log("args", args);
+    // console.log("args", args);
 
     const resultInvoke = await akcSdk.invoke(
       channelName,
@@ -45,12 +45,12 @@ async function invokeChaincode(input) {
       artifactFolder
     );
 
-    console.log(
-      "chaincode response => typeof resultInvoke:",
-      typeof resultInvoke,
-      "; value: ",
-      resultInvoke
-    );
+    // console.log(
+    //   "chaincode response => typeof resultInvoke:",
+    //   typeof resultInvoke,
+    //   "; value: ",
+    //   resultInvoke
+    // );
     return resultInvoke;
   } catch (err) {
     console.error(err);
@@ -80,7 +80,7 @@ async function queryChaincode(input) {
     }
     console.log("Targets", targets);
     console.log("funcName", funcName);
-    console.log("args", args);
+    // console.log("args", args);
 
     const resultQuery = await akcSdk.query(
       channelName,
@@ -93,12 +93,12 @@ async function queryChaincode(input) {
       artifactFolder
     );
 
-    console.log(
-      "chaincode response => typeof resultQuery:",
-      typeof resultQuery,
-      "; value: ",
-      resultQuery
-    );
+    // console.log(
+    //   "chaincode response => typeof resultQuery:",
+    //   typeof resultQuery,
+    //   "; value: ",
+    //   resultQuery
+    // );
     return resultQuery;
   } catch (err) {
     console.error(err);
