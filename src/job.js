@@ -307,8 +307,8 @@ async.forever(
               console.log(PEL[n]);
               xrangeAsync(process.env.STREAMS_KEY_SUB, PEL[n][0], PEL[n][0])
                 .then((record) => {
-                  // console.log(`${Date.now()} record`);
-                  // console.log(record);
+                  console.log(`${Date.now()} record`);
+                  console.log(record);
                   if (record.length > 0) {
                     // pelIds.push(e[0]);
                     // pelRecords.push(record[0]);
@@ -332,8 +332,8 @@ async.forever(
           //     throw errIPel;
           //   }
           // };
-          // console.log(`${Date.now()} pelRecords`);
-          // console.log(pelRecords);
+          console.log(`${Date.now()} pelRecords`);
+          console.log(pelRecords);
           if (pelRecords.length > 0) {
             await packageAndCommit(pelRecords);
           }
