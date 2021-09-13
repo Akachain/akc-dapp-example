@@ -14,6 +14,13 @@ const mergeUnique = function (arr1, arr2) {
     }));
 }
 
+const mergeCumulative = function (arr1, arr2) {
+  
+    return arr1.concat(arr2.filter(function (item) {
+        return arr1.indexOf(item) === -1;
+    }));
+}
+
 const setTxState = function (tx, status, actualSTMatched, actualATMatched, reason) {
     tx.ActualSTMatched = actualSTMatched;
     tx.ActualATMatched = actualATMatched;

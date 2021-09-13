@@ -107,6 +107,7 @@ async function handleTx(txList) {
     for (const txs of txList) {
         // console.log("txs", txs);
 
+        // logger.info("Check Utxo",txs.RequestId," Start");
         if (txs.TransactionType == constant.EXCHANGE || txs.TransactionType == constant.IAO) {
             let outwardTx = txs.Transfer[0];
 

@@ -124,18 +124,23 @@ async function callTxOnchain(txRequests) {
   if (txRequests.length == 0) {
     return true;
   }
+  logger.info("Group Request Start");
   let groupRq = await groupRequest(txRequests);
   let groupRqArr = Object.values(groupRq);
+  logger.info("Group Request End");
   //flush all cache
   await global.utxosCache.flushAll();
   await global.batchCache.flushAll();
   await Promise.all(groupRqArr.map(async (requests) => {
+    logger.info("Handle Txs START");
     let handledRequests = await utxo.handleTx(requests);
+    logger.info("Handle Txs END");
     let batchExcute = global.batchCache.get(requests[0].Batch);
     if (batchExcute) {
       console.log("batchExcute ", requests[0].Batch);
       // console.log("handledRequests ", handledRequests);
       try {
+        logger.info("Call OC START");
         const result = await sdk.processRequestChainCode(
           constant.EXCHANGE,
           handledRequests.ocInput,
@@ -161,6 +166,7 @@ async function callTxOnchain(txRequests) {
             global.usedUtxosIdCache.set(input, true);
           });
         }
+        logger.info("Call OC END");
       } catch (error) {
         throw error;
       }
@@ -173,6 +179,7 @@ async function callTxOnchain(txRequests) {
 
 // package request & send to onchain
 async function packageAndCommit(messages) {
+  logger.info(`Handle from redis START`);
   const listRequestId = [];
   const mintRequest = [];
   const txRequest = [];
@@ -219,14 +226,14 @@ async function packageAndCommit(messages) {
     }
     listRequestId.push(id);
   }));
+  logger.info(`Handle from redis END`);
 
-
-  logger.info(`Handle request START`, Date.now);
+  logger.info(`Handle request START`);
   logger.info(`Request's amount`, listRequestId.length);
   
   await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest)]);
 
-  logger.info(`Handle request END`, Date.now);
+  logger.info(`Handle request END`);
 
   // console.log("mintRequest", mintRequest);
   // console.log("txRequest", txRequest);
