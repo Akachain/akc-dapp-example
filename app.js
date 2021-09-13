@@ -8,7 +8,7 @@ const job = require('./src/job');
     // { RequestId: '1', TransactionType: 'Mint', Transfer: [{ From: 'Operator', To: 'IAO', TokenId: "ST", Amount: 10000 }], Batch: null, Checked: false },
     // { RequestId: '2', TransactionType: 'Deposit', Transfer: [{ From: 'Alice', To: 'Bob', TokenId: "ST", Amount: 1000 }], Batch: null, Checked: false },
     // { RequestId: '3', Transaction_Type: 'Exchange', Transfer: [{ From: 'Bob', To: 'IAO', TokenId: "ST", Amount: 200 }, { From: 'IAO', To: 'Hold', TokenId: "AT1", Amount: 20 }], Batch: null, Checked: false },
-    // { RequestId: '4', Transaction_Type: 'Transfer', Transfer: [{ From: 'Alice', To: 'XYZ', TokenId: "ST", Amount: 10 },{ From: 'Alice', To: 'Bob', TokenId: "ST", Amount: 1 }], Batch: null, Checked: false },
+    // { RequestId: '4', Transaction_Type: 'Transfer', Transfer: [{ From: 'Alice', To: 'XYZ', TokenId: "ST", Amount: 15 },{ From: 'Alice', To: 'XYZ', TokenId: "ST", Amount: 10 },{ From: 'Alice', To: 'Bob', TokenId: "ST", Amount: 1 }], Batch: null, Checked: false },
     // { RequestId: '5', Transaction_Type: 'Transfer', Transfer: [{ From: 'Alice', To: 'Bob', TokenId: "AT2", Amount: 1 }], Batch: null, Checked: false },
 // ];
 // var txs = [

@@ -43,12 +43,14 @@ function utxoCalculator(utxos, remainUtxos, target) {
         utxos.splice(0, 1);
     }
 
-    let remainIndex = _.findIndex(remainUtxos, { 'walletId': remainUtxo.walletId, 'tokenId': remainUtxo.tokenId });
-    if (remainIndex < 0) {
-        remainUtxos.push(remainUtxo);
-    } else {
-        remainUtxos[remainIndex] = remainUtxo;
-    }
+    // let remainIndex = _.findIndex(remainUtxos, { 'walletId': remainUtxo.walletId, 'tokenId': remainUtxo.tokenId });
+    // if (remainIndex < 0) {
+    //     remainUtxos.push(remainUtxo);
+    // } else {
+    //     remainUtxos[remainIndex] = remainUtxo;
+    // }
+    remainUtxos = common.mergeUtxoReplace(remainUtxos, remainUtxo);
+
     return {
         inputs: inputs,
     }
@@ -160,7 +162,7 @@ async function handleTx(txList) {
 
         //Handle transaction outward and return
         // await Promise.all(txs.Transfer.map(async (tx) => {
-        
+
         for (const tx of txs.Transfer) {
             let actualMatched = tx.ActualMatched ? tx.ActualMatched : tx.Amount;
             //create utxo output
@@ -171,7 +173,8 @@ async function handleTx(txList) {
             }
             // outputs.push(utxoOut);
             if (outputs[tx.TokenId]) {
-                outputs[tx.TokenId].push(utxoOut);
+                outputs[tx.TokenId] = common.mergeUtxoCumulative(outputs[tx.TokenId], utxoOut);
+                // outputs[tx.TokenId].push(utxoOut);
             } else {
                 outputs[tx.TokenId] = [utxoOut];
             }
@@ -217,7 +220,7 @@ async function handleTx(txList) {
 
     // split Remain Utxos into group by TokenId
     remainUtxos = _.groupBy(_.filter(remainUtxos, function (o) { return _.toNumber(o.amount) > 0; }), "tokenId");
-    // console.log("remainUtxos", remainUtxos);
+    console.log("remainUtxos", remainUtxos);
 
     //transform to Onchain API
     let ocInput = { pairs: [] };
@@ -234,9 +237,9 @@ async function handleTx(txList) {
     }
     ocInput.metadata = JSON.stringify(txList);
 
-    // console.log("inputs", inputs);
-    // console.log("outputs", outputs);
-    // console.log("ocInput", ocInput);
+    console.log("inputs", inputs);
+    console.log("outputs", outputs);
+    console.log("ocInput", ocInput.pairs[0]);
     // console.log("inputList", inputList);
     return { ocInput, inputList };
 }
