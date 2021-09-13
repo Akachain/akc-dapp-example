@@ -36,10 +36,13 @@ const xrangeAsync = promisify(redisClient.xrange).bind(redisClient);
 //check if merge is possible 
 function linked(rqSource, rqTarget) {
   let linked = false;
-  rqSource.Transfer.forEach(itemSource => {
-    rqTarget.Transfer.forEach(itemTarget => {
+  rqSource.Transfer.every(itemSource => {
+    if (linked) { break; }
+    rqTarget.Transfer.every(itemTarget => {
+      if (linked) { break; }
       if ((itemSource.From == itemTarget.From) && (itemSource.TokenId == itemTarget.TokenId)) {
         linked = true;
+        break;
       }
     });
   });
@@ -66,15 +69,19 @@ function groupRequest(rqList) {
         let txIndex = searchQ[0];
         //dequeue
         searchQ.splice(0, 1);
-
+        logger.info("BFS Start check can merge ", txIndex);
+        
         for (const index in rqList) {
           // check if merge is possible 
+          logger.info("BFS Start check ", txIndex,"vs",index);
           if (!rqList[index].Checked && linked(rqList[txIndex], rqList[index])) {
             searchQ.push(index);
             rqList[txIndex].Batch = batch;
             rqList[txIndex].Checked = true;
           }
+          logger.info("BFS End check ", txIndex,"vs",index);
         }
+        logger.info("BFS End check can merge ", txIndex);
       }
       logger.info("BFS End batch", batch);
       batch++;
