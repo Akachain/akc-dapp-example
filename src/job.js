@@ -56,10 +56,12 @@ function groupRequest(rqList) {
   // reference: https://en.wikipedia.org/wiki/Breadth-first_search
   while (i < rqList.length) {
     if (!rqList[i].Checked) {
+      logger.info("BFS Start for node", i);
       rqList[i].Batch = batch;
       rqList[i].Checked = true;
       var searchQ = [];
       searchQ.push(i);
+      logger.info("BFS Start batch", batch);
       while (searchQ.length > 0) {
         let txIndex = searchQ[0];
         //dequeue
@@ -74,8 +76,10 @@ function groupRequest(rqList) {
           }
         }
       }
+      logger.info("BFS End batch", batch);
       batch++;
     }
+    logger.info("BFS End for node", i);
     i++;
   }
 
@@ -230,7 +234,7 @@ async function packageAndCommit(messages) {
 
   logger.info(`Handle request START`);
   logger.info(`Request's amount`, listRequestId.length);
-  
+
   await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest)]);
 
   logger.info(`Handle request END`);
