@@ -36,16 +36,20 @@ const xrangeAsync = promisify(redisClient.xrange).bind(redisClient);
 //check if merge is possible 
 function linked(rqSource, rqTarget) {
   let linked = false;
-  rqSource.Transfer.every(itemSource => {
+  // rqSource.Transfer.every(itemSource => {
+  for (const itemSource of rqSource.Transfer) {
     if (linked) { break; }
-    rqTarget.Transfer.every(itemTarget => {
+    // rqTarget.Transfer.every(itemTarget => {
+    for (const itemTarget of rqTarget.Transfer) {
       if (linked) { break; }
       if ((itemSource.From == itemTarget.From) && (itemSource.TokenId == itemTarget.TokenId)) {
         linked = true;
         break;
       }
-    });
-  });
+    }
+  }
+  //   });
+  // });
   return linked;
 }
 
@@ -59,34 +63,25 @@ function groupRequest(rqList) {
   // reference: https://en.wikipedia.org/wiki/Breadth-first_search
   while (i < rqList.length) {
     if (!rqList[i].Checked) {
-      logger.info("BFS Start for node", i);
       rqList[i].Batch = batch;
       rqList[i].Checked = true;
       var searchQ = [];
       searchQ.push(i);
-      logger.info("BFS Start batch", batch);
       while (searchQ.length > 0) {
         let txIndex = searchQ[0];
         //dequeue
+        rqList[txIndex].Checked = true;
         searchQ.splice(0, 1);
-        logger.info("BFS Start check can merge ", txIndex);
-        
         for (const index in rqList) {
           // check if merge is possible 
-          logger.info("BFS Start check ", txIndex,"vs",index);
-          if (!rqList[index].Checked && linked(rqList[txIndex], rqList[index])) {
+          if (!rqList[index].Checked && (searchQ.indexOf(index) < 0) && linked(rqList[txIndex], rqList[index])) {
             searchQ.push(index);
             rqList[txIndex].Batch = batch;
-            rqList[txIndex].Checked = true;
           }
-          logger.info("BFS End check ", txIndex,"vs",index);
         }
-        logger.info("BFS End check can merge ", txIndex);
       }
-      logger.info("BFS End batch", batch);
       batch++;
     }
-    logger.info("BFS End for node", i);
     i++;
   }
 
@@ -142,10 +137,9 @@ async function callTxOnchain(txRequests) {
   //flush all cache
   await global.utxosCache.flushAll();
   await global.batchCache.flushAll();
+  logger.info("Handle Txs START");
   await Promise.all(groupRqArr.map(async (requests) => {
-    logger.info("Handle Txs START");
     let handledRequests = await utxo.handleTx(requests);
-    logger.info("Handle Txs END");
     let batchExcute = global.batchCache.get(requests[0].Batch);
     if (batchExcute) {
       console.log("batchExcute ", requests[0].Batch);
@@ -183,6 +177,7 @@ async function callTxOnchain(txRequests) {
       }
     }
   }));
+  logger.info("Handle Txs END");
 
   // console.log("callTxOnchain-txRequests", txRequests);
   return true;
