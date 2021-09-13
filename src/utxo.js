@@ -7,7 +7,7 @@ const constant = require('../utils/constant');
 const db = require('./db');
 
 function utxoCalculator(utxos, remainUtxos, target) {
-    logger.info(`utxoCalculator - WalletId: ${utxos[0].WalletId}, TokenId: ${utxos[0].TokenId}, Target: ${target}`);
+    // logger.info(`utxoCalculator - WalletId: ${utxos[0].WalletId}, TokenId: ${utxos[0].TokenId}, Target: ${target}`);
     let amount = 0;
     let remainAmount = 0;
     let inputs = [];
@@ -56,7 +56,7 @@ function utxoCalculator(utxos, remainUtxos, target) {
 
 // get total utxo amount
 async function remainingUtxoAmount(tx) {
-    logger.info(`remainingUtxoAmount - WalletId: ${tx.From}, TokenId: ${tx.TokenId}`);
+    // logger.info(`remainingUtxoAmount - WalletId: ${tx.From}, TokenId: ${tx.TokenId}`);
 
     //get utxo list
     let key = tx.From + '_' + tx.TokenId;
@@ -84,7 +84,7 @@ async function remainingUtxoAmount(tx) {
 }
 
 function reCalculationTransfer(outwardTx, returnTx, remainATAmount) {
-    logger.info("reCalculationTransfer");
+    // logger.info("reCalculationTransfer");
 
     //Rate Calculation
     returnTx.ActualMatched = remainATAmount;
@@ -96,7 +96,7 @@ function reCalculationTransfer(outwardTx, returnTx, remainATAmount) {
 // transform to onchain's API input.
 
 async function handleTx(txList) {
-    logger.info("handleTx");
+    // logger.info("handleTx");
     // let inputs = [];
     // let outputs = [];
     let remainUtxos = [];
@@ -105,7 +105,7 @@ async function handleTx(txList) {
     // let remainUtxos = new Map();
     // save remain token amount from utxo in.
     for (const txs of txList) {
-        console.log("txs", txs);
+        // console.log("txs", txs);
 
         if (txs.TransactionType == constant.EXCHANGE || txs.TransactionType == constant.IAO) {
             let outwardTx = txs.Transfer[0];
@@ -216,7 +216,7 @@ async function handleTx(txList) {
 
     // split Remain Utxos into group by TokenId
     remainUtxos = _.groupBy(_.filter(remainUtxos, function (o) { return _.toNumber(o.amount) > 0; }), "tokenId");
-    console.log("remainUtxos", remainUtxos);
+    // console.log("remainUtxos", remainUtxos);
 
     //transform to Onchain API
     let ocInput = { pairs: [] };
@@ -242,7 +242,7 @@ async function handleTx(txList) {
 
 // handle Mint Transaction to utxo's output
 async function handleTxMint(tx) {
-    logger.info("handleTxMint");
+    // logger.info("handleTxMint");
     let txMint = tx.Transfer[0];
 
     //create utxo output
