@@ -220,10 +220,16 @@ async function packageAndCommit(messages) {
     listRequestId.push(id);
   }));
 
+
+  logger.info(`Handle request START`, Date.now);
+  logger.info(`Request's amount`, listRequestId.length);
+  
   await Promise.all([callMintOnchain(mintRequest), callTxOnchain(txRequest)]);
 
-  console.log("mintRequest", mintRequest);
-  console.log("txRequest", txRequest);
+  logger.info(`Handle request END`, Date.now);
+
+  // console.log("mintRequest", mintRequest);
+  // console.log("txRequest", txRequest);
 
   let handledRequestList = mintRequest.concat(txRequest);
   await Promise.all(handledRequestList.map(async (request) => {
