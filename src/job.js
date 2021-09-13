@@ -70,13 +70,13 @@ function groupRequest(rqList) {
       while (searchQ.length > 0) {
         let txIndex = searchQ[0];
         //dequeue
+        rqList[txIndex].Batch = batch;
         rqList[txIndex].Checked = true;
         searchQ.splice(0, 1);
         for (const index in rqList) {
           // check if merge is possible 
           if (!rqList[index].Checked && (searchQ.indexOf(index) < 0) && linked(rqList[txIndex], rqList[index])) {
             searchQ.push(index);
-            rqList[txIndex].Batch = batch;
           }
         }
       }
