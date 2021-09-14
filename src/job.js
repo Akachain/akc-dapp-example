@@ -142,7 +142,7 @@ async function callTxOnchain(txRequests) {
     let handledRequests = await utxo.handleTx(requests);
     let batchExcute = global.batchCache.get(requests[0].Batch);
     if (batchExcute) {
-      console.log("batchExcute ", requests[0].Batch);
+      logger.info("batchExcute ", requests[0].Batch);
       // console.log("handledRequests ", handledRequests);
       try {
         logger.info("Call OC START");

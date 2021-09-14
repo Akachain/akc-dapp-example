@@ -99,6 +99,8 @@ function reCalculationTransfer(outwardTx, returnTx, remainATAmount) {
 
 async function handleTx(txList) {
     // logger.info("handleTx");
+    let txCount = 0;
+    logger.info("Transfer Amount",txCount," Start");
     // let inputs = [];
     // let outputs = [];
     let remainUtxos = [];
@@ -108,8 +110,8 @@ async function handleTx(txList) {
     // save remain token amount from utxo in.
     for (const txs of txList) {
         // console.log("txs", txs);
-
-        logger.info("Check Utxo",txs.RequestId," Start");
+        txCount = txCount + txs.Transfer.length;
+        // logger.info("Check Utxo",txs.RequestId," Start");
         if (txs.TransactionType == constant.EXCHANGE || txs.TransactionType == constant.IAO) {
             let outwardTx = txs.Transfer[0];
 
@@ -159,11 +161,11 @@ async function handleTx(txList) {
                 continue;
             }
         }
-        logger.info("Check Utxo",txs.RequestId," End");
+        // logger.info("Check Utxo",txs.RequestId," End");
         //Handle transaction outward and return
         // await Promise.all(txs.Transfer.map(async (tx) => {
 
-        logger.info("Calculate Utxo",txs.RequestId," Start");
+        // logger.info("Calculate Utxo",txs.RequestId," Start");
         for (const tx of txs.Transfer) {
             let actualMatched = tx.ActualMatched ? tx.ActualMatched : tx.Amount;
             //create utxo output
@@ -192,9 +194,9 @@ async function handleTx(txList) {
             }
             if (utxos && utxos.totalUtxo > 0) {
                 //calculate and collect utxos input
-                logger.info("utxoCalculator",tx," Start");
+                // logger.info("utxoCalculator",tx," Start");
                 let rsUtxo = await utxoCalculator(utxos.utxoList, remainUtxos, actualMatched);
-                logger.info("utxoCalculator",tx," End");
+                // logger.info("utxoCalculator",tx," End");
 
                 //merge collection, deduplicate result
                 if (inputs[tx.TokenId]) {
@@ -219,8 +221,8 @@ async function handleTx(txList) {
             }
 
         };
-        logger.info("Calculate Utxo",txs.RequestId," End");
     }
+    logger.info("Transfer Amount",txCount," End");
 
     // split Remain Utxos into group by TokenId
     remainUtxos = _.groupBy(_.filter(remainUtxos, function (o) { return _.toNumber(o.amount) > 0; }), "tokenId");
