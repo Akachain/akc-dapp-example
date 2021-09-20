@@ -1,9 +1,11 @@
 /* eslint-disable curly */
 'use strict';
 
+const constant = require('../utils/constant');
 const _ = require('lodash');
 const loggerCommon = require('./logger.js');
 const logger = loggerCommon.getLogger('db');
+const promClient = require('prom-client');
 
 // const NodeCache = require("node-cache");
 // const utxosCache = new NodeCache();
@@ -38,10 +40,10 @@ const mergeUnique = function (arr1, arr2) {
 }
 
 const mergeCumulative = function (arr1, arr2) {
-  
-    return arr1.concat(arr2.filter(function (item) {
-        return arr1.indexOf(item) === -1;
-    }));
+
+  return arr1.concat(arr2.filter(function (item) {
+    return arr1.indexOf(item) === -1;
+  }));
 }
 
 const setTxState = function (tx, status, actualSTMatched, actualATMatched, reason) {
@@ -49,6 +51,12 @@ const setTxState = function (tx, status, actualSTMatched, actualATMatched, reaso
   tx.ActualATMatched = actualATMatched;
   tx.Status = status;
   tx.Reason = reason;
+
+  if (status == constant.REJECTED || status == constant.OC_REJECTED){
+    // increase counter
+    errorRequestCounter.inc();
+  }
+
   return true;
 }
 
@@ -62,12 +70,39 @@ const rest = async timeRest => {
   });
 };
 
+/**
+ * Declare prometheus' Histograms and Counters to measure duration metrics when sending the request.
+ */
+const
+  requestCounter = new promClient.Counter({
+    name: 'akc_request_count',
+    help: 'Counter of requests'
+  }),
+  handleTxBatchHistogram = new promClient.Histogram({
+    name: 'TxService_handle_tx_batch_duration',
+    help: 'Histogram of handle transaction batch total duration',
+    labelNames: ['function', 'totalTx']
+  }),
+  callOnchainHistogram = new promClient.Histogram({
+    name: 'TxService_call_onchain_duration',
+    help: 'Histogram of call onchain function total duration',
+    labelNames: ['channel', 'chaincode', 'function']
+  }),
+  errorRequestCounter = new promClient.Counter({
+    name: 'akc_error_request_count',
+    help: 'Counter of error requests'
+  });
+
 module.exports = {
   mergeUnique,
   mergeUtxoCumulative,
   mergeUtxoReplace,
   setTxState,
   rest,
+  requestCounter,
+  handleTxBatchHistogram,
+  callOnchainHistogram,
+  errorRequestCounter,
   // utxosCache,
   // batchCache,
 };

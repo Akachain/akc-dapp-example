@@ -99,11 +99,22 @@ async function callMintOnchain(mintRequests) {
     let handledRequests = await utxo.handleTxMint(request);
     if (request.Status != constant.REJECTED) {
       try {
+        // start timer send transaction
+        let callOnchainHistogramTimer = common.callOnchainHistogram.startTimer();
+
         const result = await sdk.processRequestChainCode(
           constant.MINT,
           handledRequests,
           true
         );
+
+        // end handle tx batch timer
+        callOnchainHistogramTimer({
+          channel: process.env.CHANNEL_NAME,
+          chaincode: process.env.CHAINCODE_ID,
+          function: constant.MINT
+        });
+
         let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
         let returnMessage = (result && result.Message) ? result.Message : message.M999.Message;
 
@@ -146,11 +157,22 @@ async function callTxOnchain(txRequests) {
       // console.log("handledRequests ", handledRequests);
       try {
         logger.info("Call OC START");
+        // start timer send transaction
+        let callOnchainHistogramTimer = common.callOnchainHistogram.startTimer();
+
         const result = await sdk.processRequestChainCode(
           constant.EXCHANGE,
           handledRequests.ocInput,
           true
         );
+
+        // end handle tx batch timer
+        callOnchainHistogramTimer({
+          channel: process.env.CHANNEL_NAME,
+          chaincode: process.env.CHAINCODE_ID,
+          function: constant.EXCHANGE
+        });
+
         let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
         let returnMessage = (result && result.Message) ? result.Message : message.M999.Message;
 
@@ -185,6 +207,9 @@ async function callTxOnchain(txRequests) {
 
 // package request & send to onchain
 async function packageAndCommit(messages) {
+  // start timer send transaction
+  let handleTxBatchHistogramTimer = common.handleTxBatchHistogram.startTimer();
+
   logger.info(`Handle from redis START`);
   const listRequestId = [];
   const mintRequest = [];
@@ -275,6 +300,13 @@ async function packageAndCommit(messages) {
     process.env.APPLICATION_ID,
     ...listRequestId
   );
+
+  // end handle tx batch timer
+  handleTxBatchHistogramTimer({
+    function: handleTxBatch,
+    totalTx: listRequestId.length
+  });
+
   await common.rest(process.env.NORMRESTTIME);
 }
 

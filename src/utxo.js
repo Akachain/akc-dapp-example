@@ -100,7 +100,6 @@ function reCalculationTransfer(outwardTx, returnTx, remainATAmount) {
 async function handleTx(txList) {
     // logger.info("handleTx");
     let txCount = 0;
-    logger.info("Transfer Amount",txCount," Start");
     // let inputs = [];
     // let outputs = [];
     let remainUtxos = [];
@@ -222,7 +221,6 @@ async function handleTx(txList) {
 
         };
     }
-    logger.info("Transfer Amount",txCount," End");
 
     // split Remain Utxos into group by TokenId
     remainUtxos = _.groupBy(_.filter(remainUtxos, function (o) { return _.toNumber(o.amount) > 0; }), "tokenId");
