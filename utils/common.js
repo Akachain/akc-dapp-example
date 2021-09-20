@@ -6,6 +6,10 @@ const _ = require('lodash');
 const loggerCommon = require('./logger.js');
 const logger = loggerCommon.getLogger('db');
 const promClient = require('prom-client');
+const collectDefaultMetrics = promClient.collectDefaultMetrics;
+const register = promClient.register;
+collectDefaultMetrics();
+
 
 // const NodeCache = require("node-cache");
 // const utxosCache = new NodeCache();
@@ -103,6 +107,7 @@ module.exports = {
   handleTxBatchHistogram,
   callOnchainHistogram,
   errorRequestCounter,
+  register,
   // utxosCache,
   // batchCache,
 };

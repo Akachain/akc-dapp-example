@@ -1,6 +1,8 @@
 "use strict";
 require("dotenv").config();
 
+const express = require("express");
+const app = express();
 const loggerCommon = require('../utils/logger.js');
 const logger = loggerCommon.getLogger('db');
 const async = require("async");
@@ -19,6 +21,33 @@ const common = require('../utils/common.js');
 
 const sdk = require("./chaincode");
 const constant = require("../utils/constant");
+
+/**
+ * Express Server
+ */
+ app.get("/metrics", async (req, res) => {
+  try {
+    res.set("Content-Type", common.register.contentType);
+    res.end(await common.register.metrics());
+  } catch (ex) {
+    res.status(500).end(ex);
+  }
+});
+
+app.get("/metrics/counter", async (req, res) => {
+  try {
+    res.set("Content-Type", common.register.contentType);
+    res.end(await common.register.getSingleMetricAsString("test_counter"));
+  } catch (ex) {
+    res.status(500).end(ex);
+  }
+});
+
+app.listen(process.env.PORT, () => {
+  console.log(`App listening at port ${process.env.PORT}`);
+});
+
+
 /**
  * Redis Config
  */
