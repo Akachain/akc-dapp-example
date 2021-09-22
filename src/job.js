@@ -25,7 +25,7 @@ const constant = require("../utils/constant");
 /**
  * Express Server
  */
- app.get("/metrics", async (req, res) => {
+app.get("/metrics", async (req, res) => {
   try {
     res.set("Content-Type", common.register.contentType);
     res.end(await common.register.metrics());
@@ -330,6 +330,9 @@ async function packageAndCommit(messages) {
     ...listRequestId
   );
 
+  // increase counter
+  common.requestCounter.inc(listRequestId.length);
+  
   // end handle tx batch timer
   handleTxBatchHistogramTimer({
     function: "handleTxBatch",
