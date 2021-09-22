@@ -56,7 +56,7 @@ const setTxState = function (tx, status, actualSTMatched, actualATMatched, reaso
   tx.Status = status;
   tx.Reason = reason;
 
-  if (status == constant.REJECTED || status == constant.OC_REJECTED){
+  if (status == constant.REJECTED){
     // increase counter
     errorRequestCounter.inc();
   }
