@@ -79,7 +79,7 @@ const rest = async timeRest => {
  */
 const
   requestCounter = new promClient.Counter({
-    name: 'akc_request_count',
+    name: 'TxService_redis_request_count',
     help: 'Counter of requests'
   }),
   handleTxBatchHistogram = new promClient.Histogram({
@@ -93,8 +93,8 @@ const
     labelNames: ['channel', 'chaincode', 'function']
   }),
   errorRequestCounter = new promClient.Counter({
-    name: 'akc_error_request_count',
-    help: 'Counter of error requests'
+    name: 'TxService_reject_request_count',
+    help: 'Counter of reject requests'
   });
 
 module.exports = {
