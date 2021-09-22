@@ -332,7 +332,7 @@ async function packageAndCommit(messages) {
 
   // end handle tx batch timer
   handleTxBatchHistogramTimer({
-    function: handleTxBatch,
+    function: "handleTxBatch",
     totalTx: listRequestId.length
   });
 
