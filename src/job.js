@@ -332,6 +332,7 @@ async function packageAndCommit(messages) {
 
   // increase counter
   common.requestCounter.inc(listRequestId.length);
+  common.requestGauge.dec(listRequestId.length);
   
   // end handle tx batch timer
   handleTxBatchHistogramTimer({
@@ -450,6 +451,7 @@ async.forever(
               }
 
               if (stream) {
+                common.requestGauge.inc(Number(stream[0][1].length));
                 await packageAndCommit(stream[0][1]);
               }
               next();

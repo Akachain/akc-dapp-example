@@ -95,8 +95,11 @@ const
   errorRequestCounter = new promClient.Counter({
     name: 'TxService_reject_request_count',
     help: 'Counter of reject requests'
+  }),
+  requestGauge = new promClient.Gauge({
+    name: 'TxService_redis_request_gauge',
+    help: 'Gauge of requests'
   });
-
 module.exports = {
   mergeUnique,
   mergeUtxoCumulative,
@@ -108,6 +111,7 @@ module.exports = {
   callOnchainHistogram,
   errorRequestCounter,
   register,
+  requestGauge,
   // utxosCache,
   // batchCache,
 };
