@@ -332,11 +332,11 @@ async function packageAndCommit(messages) {
 
   // increase counter
   common.requestCounter.inc(listRequestId.length);
-  
+
   // end handle tx batch timer
   handleTxBatchHistogramTimer({
     function: "handleTxBatch",
-    totalTx: listRequestId.length
+    // totalTx: listRequestId.length
   });
 
   await common.rest(process.env.NORMRESTTIME);

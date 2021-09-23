@@ -85,7 +85,7 @@ const
   handleTxBatchHistogram = new promClient.Histogram({
     name: 'TxService_handle_tx_batch_duration',
     help: 'Histogram of handle transaction batch total duration',
-    labelNames: ['function', 'totalTx']
+    labelNames: ['function']
   }),
   callOnchainHistogram = new promClient.Histogram({
     name: 'TxService_call_onchain_duration',
