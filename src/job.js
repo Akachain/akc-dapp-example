@@ -184,48 +184,48 @@ async function callTxOnchain(txRequests) {
     if (batchExcute) {
       logger.info("batchExcute ", requests[0].Batch);
       // console.log("handledRequests ", handledRequests);
-      try {
-        logger.info("Call OC START");
-        // start timer send transaction
-        let callOnchainHistogramTimer = common.callOnchainHistogram.startTimer();
+      // try {
+      //   logger.info("Call OC START");
+      //   // start timer send transaction
+      //   let callOnchainHistogramTimer = common.callOnchainHistogram.startTimer();
 
-        const result = await sdk.processRequestChainCode(
-          constant.EXCHANGE,
-          handledRequests.ocInput,
-          true
-        );
+      //   const result = await sdk.processRequestChainCode(
+      //     constant.EXCHANGE,
+      //     handledRequests.ocInput,
+      //     true
+      //   );
 
-        // end handle tx batch timer
-        callOnchainHistogramTimer({
-          channel: process.env.CHANNEL_NAME,
-          chaincode: process.env.CHAINCODE_ID,
-          function: constant.EXCHANGE
-        });
+      //   // end handle tx batch timer
+      //   callOnchainHistogramTimer({
+      //     channel: process.env.CHANNEL_NAME,
+      //     chaincode: process.env.CHAINCODE_ID,
+      //     function: constant.EXCHANGE
+      //   });
 
-        let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
-        let returnMessage = (result && result.Message) ? result.Message : message.M999.Message;
+      //   let status = (result && result.Result.Status) ? result.Result.Status : constant.NETWORK_PROBLEM;
+      //   let returnMessage = (result && result.Message) ? result.Message : message.M999.Message;
 
-        if (status !== constant.SUCCESS) {
-          let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : returnMessage;
+      //   if (status !== constant.SUCCESS) {
+      //     let reason = (status == constant.NETWORK_PROBLEM) ? message.M999.Message : returnMessage;
 
-          for (const rq of requests) {
-            if (rq.Status != constant.REJECTED) {
-              common.setTxState(rq, constant.OC_REJECTED, 0, 0, reason);
-            }
-          }
+      //     for (const rq of requests) {
+      //       if (rq.Status != constant.REJECTED) {
+      //         common.setTxState(rq, constant.OC_REJECTED, 0, 0, reason);
+      //       }
+      //     }
 
-          if (status == constant.NETWORK_PROBLEM) {
-            throw new Error(message.M999.Message);
-          }
-        } else {
-          handledRequests.inputList.map(input => {
-            global.usedUtxosIdCache.set(input, true);
-          });
-        }
-        logger.info("Call OC END");
-      } catch (error) {
-        throw error;
-      }
+      //     if (status == constant.NETWORK_PROBLEM) {
+      //       throw new Error(message.M999.Message);
+      //     }
+      //   } else {
+      //     handledRequests.inputList.map(input => {
+      //       global.usedUtxosIdCache.set(input, true);
+      //     });
+      //   }
+      //   logger.info("Call OC END");
+      // } catch (error) {
+      //   throw error;
+      // }
     }
   }));
   logger.info("Handle Txs END");
