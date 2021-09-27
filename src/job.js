@@ -170,6 +170,7 @@ async function callTxOnchain(txRequests) {
   if (txRequests.length == 0) {
     return true;
   }
+  logger.info("txRequests",JSON.stringify(txRequests));
   logger.info("Group Request Start");
   let groupRq = await groupRequest(txRequests);
   let groupRqArr = Object.values(groupRq);
