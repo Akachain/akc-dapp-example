@@ -185,6 +185,7 @@ async function callTxOnchain(txRequests) {
     if (batchExcute) {
       logger.info("batchExcute ", requests[0].Batch);
       console.log("handledRequests ", handledRequests.ocInput);
+      console.log("handledRequests ", handledRequests.ocInput.pairs[0]);
       try {
         logger.info("Call OC START");
         // start timer send transaction
