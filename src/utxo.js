@@ -241,8 +241,8 @@ async function handleTx(txList) {
     }
     ocInput.metadata = JSON.stringify(txList);
 
-    // console.log("inputs", inputs);
-    // console.log("outputs", outputs);
+    console.log("inputs", inputs);
+    console.log("outputs", outputs);
     // console.log("ocInput", ocInput.pairs[0]);
     // console.log("inputList", inputList);
     return { ocInput, inputList };
