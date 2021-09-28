@@ -170,7 +170,7 @@ async function callTxOnchain(txRequests) {
   if (txRequests.length == 0) {
     return true;
   }
-  // logger.info("txRequests",JSON.stringify(txRequests));
+  logger.info("txRequests",JSON.stringify(txRequests));
   logger.info("Group Request Start");
   let groupRq = await groupRequest(txRequests);
   let groupRqArr = Object.values(groupRq);
@@ -184,7 +184,7 @@ async function callTxOnchain(txRequests) {
     let batchExcute = global.batchCache.get(requests[0].Batch);
     if (batchExcute) {
       logger.info("batchExcute ", requests[0].Batch);
-      // console.log("handledRequests ", handledRequests);
+      console.log("handledRequests ", handledRequests.ocInput);
       try {
         logger.info("Call OC START");
         // start timer send transaction
