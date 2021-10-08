@@ -114,6 +114,7 @@ function groupRequest(rqList) {
     i++;
   }
 
+  logger.info("Total Batch:", batch);
   //Group request by batch handle
   let groupRq = _.groupBy(rqList, "Batch");
   return groupRq;
