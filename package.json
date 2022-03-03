@@ -1,5 +1,5 @@
 {
-  "name": "transaction-handle-service",
+  "name": "akc-dapp-example",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -10,16 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@akachain/akc-node-sdk-2.0": "^1.0.3",
+    "@akachain/akc-node-sdk-external-cc": "^v1.0.1",
     "async": "^3.2.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "lodash": "^4.17.21",
-    "log4js": "^6.3.0",
-    "mysql": "^2.18.1",
-    "node-cache": "^5.1.2",
-    "pg-format": "^1.0.4",
-    "prom-client": "^13.2.0",
-    "redis": "^3.1.2"
+    "prom-client": "^13.2.0"
   }
 }
